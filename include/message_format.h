@@ -1,8 +1,12 @@
-#pragma once
+#ifndef GUARD_MESSAGE_FORMAT_H
+#define GUARD_MESSAGE_FORMAT_H
 
-#include "types.h"
-#include "heap.h"
+#include "player_data.h"
 #include "pm_string.h"
+#include "pokemon_storage_system.h"
+#include "pokemon_types_def.h"
+#include "save_misc_data.h"
+#include "trainer_data.h"
 
 typedef struct MessageFormatAttrs {
     u8 data[4];
@@ -26,12 +30,19 @@ void MessageFormat_Delete(MessageFormat *messageFormat);
 void StringExpandPlaceholders(MessageFormat *messageFormat, String *dest, String *src);
 void BufferString(MessageFormat *messageFormat, u32 fieldno, const String *string, s32 a3, s32 a4, s32 a5);
 void BufferIntegerAsString(MessageFormat *messageFormat, u32 idx, s32 num, u32 numDigits, PrintingMode strconvmode, BOOL whichCharset);
+void BufferPlayersName(MessageFormat *messageFormat, u32 idx, PlayerProfile *playerProfile);
 void BufferECWord(MessageFormat *messageFormat, u32 idx, u16 wordno);
 void BufferSpeciesName(MessageFormat *messageFormat, u32 idx, u16 species);
 void BufferSpeciesNameWithArticle(MessageFormat *messageFormat, u32 idx, u32 species);
 void BufferTrainerClassName(MessageFormat *messageFormat, u32 fieldno, u32 trainerClassId);
 void MessageFormat_InitFields(MessageFormatFields *fields);
 void SetStringAsPlaceholder(MessageFormat *messageFormat, u32 fieldno, const String *string, const MessageFormatAttrs *attrs);
+void BufferRivalsName(MessageFormat *messageFormat, u32 fieldno, SaveData *saveData);
+void BufferFriendsName(MessageFormat *messageFormat, u32 fieldno, SaveData *saveData);
+void BufferBoxMonSpeciesName(MessageFormat *messageFormat, u32 fieldno, BoxPokemon *boxmon);
+void BufferBoxMonSpeciesNameWithArticle(MessageFormat *messageFormat, u32 fieldno, BoxPokemon *boxmon);
+void BufferBoxMonNickname(MessageFormat *messageFormat, u32 fieldno, BoxPokemon *boxmon);
+void BufferBoxMonOTName(MessageFormat *messageFormat, u32 fieldno, BoxPokemon *boxmon);
 void BufferMoveName(MessageFormat *messageFormat, u32 fieldno, u32 moveId);
 void BufferRibbonNameOrDesc(MessageFormat *messageFormat, u32 fieldno, u32 decoId);
 void BufferAbilityName(MessageFormat *messageFormat, u32 fieldno, u32 abilityId);
@@ -46,10 +57,13 @@ void BufferStatusName(MessageFormat *messageFormat, u32 fieldno, u32 statusId);
 void BufferFlavorDislikeText(MessageFormat *messageFormat, u32 fieldno, u32 flavorId);
 void BufferLandmarkName(MessageFormat *messageFormat, u32 fieldno, u32 landmarkId);
 void BufferTrainerClassNameWithArticle(MessageFormat *messageFormat, u32 fieldno, u32 trainerClassId);
+void BufferTrainerClassNameFromDataStruct(MessageFormat *messageFormat, u32 fieldno, Trainer *trainer);
 void BufferTrainerName(MessageFormat *messageFormat, u32 fieldno, u32 trainerId);
 void BufferFrontierOpponentName(MessageFormat *messageFormat, u32 fieldno, u32 opponentId);
+void BufferTrainerNameFromDataStruct(MessageFormat *messageFormat, u32 fieldno, Trainer *trainer);
 void BufferDecorationName(MessageFormat *messageFormat, u32 fieldno, u32 decorationId);
 void BufferGenderSymbol(MessageFormat *messageFormat, u32 fieldno, u8 gender);
+void BufferPCBoxName(MessageFormat *messageFormat, u32 fieldno, PCStorage *pcStorage, u32 boxno);
 void BufferCountryName(MessageFormat *messageFormat, u32 fieldno, u32 countryId);
 void BufferCityName(MessageFormat *messageFormat, u32 fieldno, u32 countryId, u32 cityId);
 void BufferSealName(MessageFormat *messageFormat, u32 fieldno, u32 sealId);
@@ -58,7 +72,7 @@ void BufferLocationName(MessageFormat *messageFormat, u32 fieldno, u32 mapsecId)
 void BufferFashionName(MessageFormat *messageFormat, u32 fieldno, u32 fashionId);
 void BufferFashionNameWithArticle(MessageFormat *messageFormat, u32 fieldno, u32 fashionId);
 void BufferContestBackgroundName(MessageFormat *messageFormat, u32 fieldno, u32 bgId);
-void BufferGroupName(MessageFormat *messageFormat, void *saveData, s32 groupId, s32 fieldno, s32 nameType);
+void BufferGroupName(MessageFormat *messageFormat, SaveData *saveData, s32 groupId, s32 fieldno, s32 nameType);
 void BufferWiFiPlazaActivityName(MessageFormat *messageFormat, u32 fieldno, u32 activityId);
 void BufferWiFiPlazaEventName(MessageFormat *messageFormat, u32 fieldno, u32 eventId);
 void BufferWiFiPlazaInstrumentName(MessageFormat *messageFormat, u32 fieldno, u32 instrumentId);
@@ -79,3 +93,5 @@ void BufferMonthNameAbbr(MessageFormat *messageFormat, u32 fieldno, u32 month);
 void MessageFormat_UpperFirstChar(MessageFormat *messageFormat, u32 fieldno);
 void BufferDeptStoreFloorNo(MessageFormat *messageFormat, u32 fieldno, u32 floor);
 void MessageFormat_ResetBuffers(MessageFormat *messageFormat);
+
+#endif // GUARD_MESSAGE_FORMAT_H

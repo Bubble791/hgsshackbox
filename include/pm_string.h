@@ -1,6 +1,10 @@
-#pragma once
+#ifndef POKEHEARTGOLD_STRING_H
+#define POKEHEARTGOLD_STRING_H
+
+#include "constants/charcode.h"
 
 #include "heap.h"
+#include "string_util.h"
 
 typedef struct String {
     u16 maxsize;
@@ -9,20 +13,6 @@ typedef struct String {
     u16 data[0];
 } String;
 
-typedef enum PrintingMode {
-    PRINTING_MODE_LEFT_ALIGN,
-    PRINTING_MODE_RIGHT_ALIGN,
-    PRINTING_MODE_LEADING_ZEROS,
-} PrintingMode;
-
-u16 *CopyU16StringArray(u16 *dest, const u16 *src);
-BOOL StringNotEqual(const u16 *a, const u16 *b);
-u16 *StringFill(u16 *str, u16 val, u32 n);
-u16 *StringFillEOS(u16 *s, u32 n);
-u16 *ConvertUIntToDecimalString(u16 *dest, u32 num, PrintingMode strconvmode, u32 ndigits);
-u16 *CopyU16StringArrayN(u16 *dest, const u16 *src, u32 n);
-int StringLength(const u16 *str);
-BOOL StringNotEqualN(const u16 *a, const u16 *b, u32 n);
 String *String_New(u32 maxsize, HeapID heapId);
 void String_Delete(String *string);
 void CopyStringToU16Array(const String *string, u16 *dest, u32 n);
@@ -48,3 +38,5 @@ void String_RadioAddStatic(String *string, u8 level);
 u16 *String_cstr(String *str);
 void String_Cat(String *dest, String *src);
 BOOL String_IsTrainerName(String *string);
+
+#endif // POKEHEARTGOLD_STRING_H

@@ -1,11 +1,30 @@
 // overlay43 朋友手册的overlay
 #include "global.h"
-#include "gx_bgcnt.h"
-#include "overlay_manager.h"
-#include "gf_gfx_planes.h"
+
 #include "bg_window.h"
-#include "obj_char_transfer.h"
+#include "filesystem.h"
+#include "font.h"
+#include "gf_gfx_loader.h"
+#include "gf_gfx_planes.h"
+#include "launch_application.h"
+#include "math_util.h"
+#include "menu_input_state.h"
 #include "message_format.h"
+#include "msgdata.h"
+#include "obj_char_transfer.h"
+#include "obj_pltt_transfer.h"
+#include "pokemon_icon_idx.h"
+#include "sound_02004A44.h"
+#include "systask_environment.h"
+#include "system.h"
+#include "text.h"
+#include "unk_02005D10.h"
+#include "unk_0200ACF0.h"
+#include "unk_0200B150.h"
+#include "unk_0200FA24.h"
+#include "unk_02013534.h"
+#include "unk_020163E0.h"
+#include "vram_transfer_manager.h"
 
 #define HEAPID_BASE_APP 3
 #define HEAP_ID_HACK_BOX 51
@@ -80,7 +99,7 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
     // 图层初始化
     for (int i = 0; i < NELEMS(bgTemplate); i++)
     {
-        InitBgFromTemplate(data->bgConfig, i, &bgTemplate, GF_BG_TYPE_TEXT);
+        InitBgFromTemplate(data->bgConfig, i, &bgTemplate[i], GF_BG_TYPE_TEXT);
         BgClearTilemapBufferAndCommit(data->bgConfig, i);
     }
     NamingScreen_ToggleGfxPlanes(FALSE);

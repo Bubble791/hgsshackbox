@@ -34,7 +34,8 @@ ARMIPS := tools/armips/build/armips
 # Compiler/Assembler/Linker settings
 LDFLAGS = rom.ld -T linker.ld
 ASFLAGS = -mthumb -I ./data
-CFLAGS = -mthumb -mno-thumb-interwork -mcpu=arm7tdmi -mtune=arm7tdmi -mno-long-calls -march=armv4t -Wall -Wextra -Wno-builtin-declaration-mismatch -Wno-sequence-point -Wno-address-of-packed-member -Os -fira-loop-pressure -fipa-pta
+CFLAGS = -mthumb -mno-thumb-interwork -mcpu=arm7tdmi -mtune=arm7tdmi -march=armv4t -Wall -Wextra -Wno-parentheses -Wno-sign-compare -Wno-multichar -Wno-unused-parameter -Wno-builtin-declaration-mismatch -Wno-sequence-point -Wno-ignored-qualifiers -Wno-address-of-packed-member -Wno-old-style-declaration -Os -fira-loop-pressure -fipa-pta
+GLB_DEFINES := -DSDK_ARM9 -DSDK_CODE_ARM -DSDK_FINALROM
 
 ####################### Output #######################
 C_SUBDIR = src
@@ -59,12 +60,12 @@ $(BUILD)/%.d: asm/%.s
 $(BUILD)/%.o: src/%.c
 	@mkdir -p $(BUILD)
 	@echo -e "Compiling"
-	$(CC) $(CFLAGS) -I include -c $< -o $@
+	$(CC) $(CFLAGS) -I lib/include -I include -I include/library $(GLB_DEFINES) -c $< -o $@
 
 $(LINK):$(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS)
 
-all: $(OBJS)
+all: $(LINK)
 	$(ARMIPS) main.s
 
 clean:
