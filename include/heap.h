@@ -43,3 +43,12 @@ typedef enum HeapID {
     HEAP_ID_VOLTORB_FLIP = 160,
     HEAP_ID_MAX,
 } HeapID;
+
+BOOL CreateHeap(HeapID parent, HeapID child, u32 size);
+BOOL CreateHeapAtEnd(HeapID parent, HeapID child, u32 size);
+void DestroyHeap(HeapID heapId);
+void *AllocFromHeap(HeapID heapId, u32 size);
+void *AllocFromHeapAtEnd(HeapID heapId, u32 size);
+void Heap_Free(void *ptr);
+void Heap_FreeExplicit(HeapID heapId, void *ptr);
+u32 GF_ExpHeap_FndGetTotalFreeSize(HeapID heapId);

@@ -5,13 +5,14 @@
 #include "gf_gfx_planes.h"
 #include "bg_window.h"
 #include "obj_char_transfer.h"
+#include "message_format.h"
 
 #define HEAPID_BASE_APP 3
 #define HEAP_ID_HACK_BOX 51
 
 typedef struct HackBoxTool
 {
-    void *bgConfig;
+    BgConfig *bgConfig;
     void *msgFormat;
 } HackBoxTool;
 

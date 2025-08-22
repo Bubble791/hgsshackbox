@@ -64,7 +64,7 @@ $(BUILD)/%.o: src/%.c
 $(LINK):$(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS)
 
-all: $(LINK)
+all: $(OBJS)
 	$(ARMIPS) main.s
 
 clean:

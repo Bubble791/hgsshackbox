@@ -1,5 +1,8 @@
 #pragma once
 
+#include "gf_gfx_planes.h"
+#include "fx.h"
+
 typedef struct BgTemplate {
     u32 x;
     u32 y;
@@ -53,3 +56,180 @@ typedef struct GraphicsModes {
     GXBGMode subMode;
     GXBG0As _2d3dMode;
 } GraphicsModes;
+
+typedef struct Background {
+    void *tilemapBuffer;
+    u32 bufferSize;
+    u32 baseTile;
+
+    int hOffset;
+    int vOffset;
+
+    u8 mode;
+    u8 size;
+    u8 colorMode;
+    u8 tileSize;
+    u16 rotation;
+    u16 unk22; // probably padding
+    int xScale;
+    int yScale;
+    int centerX;
+    int centerY;
+} Background;
+
+typedef struct BgConfig {
+    HeapID heapId;
+    u16 scrollScheduled;
+    u16 bufferTransferScheduled;
+    Background bgs[8];
+} BgConfig;
+
+typedef struct Bitmap {
+    const u8 *pixels;
+    u16 width;
+    u16 height;
+} Bitmap;
+
+typedef struct WindowTemplate {
+    u8 bgId;
+    u8 left;
+    u8 top;
+    u8 width;
+    u8 height;
+    u8 palette;
+    u16 baseTile;
+} WindowTemplate;
+
+typedef struct Window {
+    BgConfig *bgConfig;
+    u8 bgId;
+    u8 tilemapLeft;
+    u8 tilemapTop;
+    u8 width;
+    u8 height;
+    u8 paletteNum;
+    u16 baseTile : 15;
+    u16 colorMode : 1;
+    void *pixelBuffer;
+} Window;
+
+enum GFScreen {
+    SCREEN_MAIN = 0,
+    SCREEN_SUB = 1,
+};
+
+enum GFBppMode {
+    GF_BG_CLR_4BPP = 0,
+    GF_BG_CLR_8BPP,
+};
+
+enum GFBgCntSet {
+    GF_BG_CNT_SET_COLOR_MODE = 0,
+    GF_BG_CNT_SET_SCREEN_BASE,
+    GF_BG_CNT_SET_CHAR_BASE,
+    GF_BG_CNT_SET_SCREEN_SIZE,
+};
+
+enum BgPosAdjustOp {
+    // Text layers
+    BG_POS_OP_SET_X = 0,
+    BG_POS_OP_ADD_X,
+    BG_POS_OP_SUB_X,
+    BG_POS_OP_SET_Y,
+    BG_POS_OP_ADD_Y,
+    BG_POS_OP_SUB_Y,
+
+    // Affine layers
+    BG_POS_OP_SET_ROT = 0,
+    BG_POS_OP_ADD_ROT,
+    BG_POS_OP_SUB_ROT,
+    BG_POS_OP_SET_XSCALE,
+    BG_POS_OP_ADD_XSCALE,
+    BG_POS_OP_SUB_XSCALE,
+    BG_POS_OP_SET_YSCALE,
+    BG_POS_OP_ADD_YSCALE,
+    BG_POS_OP_SUB_YSCALE,
+    BG_POS_OP_SET_CENTERX,
+    BG_POS_OP_ADD_CENTERX,
+    BG_POS_OP_SUB_CENTERX,
+    BG_POS_OP_SET_CENTERY,
+    BG_POS_OP_ADD_CENTERY,
+    BG_POS_OP_SUB_CENTERY,
+};
+
+BgConfig *BgConfig_Alloc(HeapID heapId);
+HeapID BgConfig_GetHeapId(BgConfig *bgConfig);
+void SetBothScreensModesAndDisable(const GraphicsModes *modes);
+void SetScreenModeAndDisable(const struct GraphicsModes *gfxModes, enum GFScreen screen);
+void InitBgFromTemplateEx(BgConfig *bgConfig, u8 bgId, const BgTemplate *template, u8 bgType, u8 enable);
+void InitBgFromTemplate(BgConfig *bgConfig, u8 bgId, const BgTemplate *template, u8 bgType);
+void SetBgControlParam(BgConfig *config, u8 bgId, enum GFBgCntSet attr, u8 value);
+void FreeBgTilemapBuffer(BgConfig *bgConfig, u8 bgId);
+void SetBgPriority(u8 bgId, u16 priority);
+void ToggleBgLayer(u8 bgId, u8 toggle);
+void BgSetPosTextAndCommit(BgConfig *bgConfig, u8 bgId, enum BgPosAdjustOp op, int val);
+int Bg_GetXpos(const BgConfig *bgConfig, GFBgLayer bgId);
+int Bg_GetYpos(const BgConfig *bgConfig, GFBgLayer bgId);
+void Bg_SetTextDimAndAffineParams(BgConfig *bgConfig, u8 bgId, enum BgPosAdjustOp op, int value, MtxFx22 *mtx, int centerX, int centerY);
+void SetBgAffine(BgConfig *bgConfig, u8 bgId, MtxFx22 *mtx, int centerX, int centerY);
+void BgCommitTilemapBufferToVram(BgConfig *bgConfig, u8 bgId);
+void BgCopyOrUncompressTilemapBufferRangeToVram(BgConfig *bgConfig, u8 bgId, const void *buffer, u32 bufferSize, u32 baseTile);
+void BG_LoadScreenTilemapData(BgConfig *bgConfig, u8 bgId, const void *data, u32 size);
+void BG_LoadCharTilesData(BgConfig *bgConfig, u8 bgId, const void *data, u32 size, u32 tileStart);
+void BG_ClearCharDataRange(u8 bgId, u32 size, u32 offset, HeapID heapId);
+void BG_FillCharDataRange(BgConfig *bgConfig, GFBgLayer bgId, u32 fillValue, u32 ntiles, u32 offset);
+void BG_LoadPlttData(u32 location, const void *plttData, u16 size, u16 offset);
+void BG_LoadBlankPltt(u32 location, u32 size, u32 offset, HeapID heapId);
+void BG_SetMaskColor(u8 bgId, u16 value);
+void LoadRectToBgTilemapRect(BgConfig *bgConfig, u8 bgId, const void *buffer, u8 destX, u8 destY, u8 width, u8 height);
+void CopyToBgTilemapRect(BgConfig *bgConfig, u8 bgId, u8 destX, u8 destY, u8 destWidth, u8 destHeight, const void *buffer, u8 srcX, u8 srcY, u8 srcWidth, u8 srcHeight);
+void CopyRectToBgTilemapRect(BgConfig *bgConfig, u8 bgId, u8 destX, u8 destY, u8 destWidth, u8 destHeight, const void *buffer, u8 srcX, u8 srcY, u8 srcWidth, u8 srcHeight);
+void FillBgTilemapRect(BgConfig *bgConfig, u8 bgId, u16 fillValue, u8 x, u8 y, u8 width, u8 height, u8 mode);
+void BgTilemapRectChangePalette(BgConfig *bgConfig, u8 bgId, u8 x, u8 y, u8 width, u8 height, u8 palette);
+void BgClearTilemapBufferAndCommit(BgConfig *bgConfig, u8 bgId);
+void BgFillTilemapBufferAndCommit(BgConfig *bgConfig, u8 bgId, u16 fillValue);
+void BgFillTilemapBufferAndSchedule(BgConfig *bgConfig, u8 bgId, u16 fillValue);
+void *BgGetCharPtr(u8 bgId);
+u8 *Convert4bppTo8bpp(u8 *src4Bpp, u32 size, u8 paletteNum, HeapID heapId);
+void *GetBgTilemapBuffer(BgConfig *bgConfig, u8 bgId);
+int GetBgHOffset(BgConfig *bgConfig, u8 bgId);
+u8 GetBgColorMode(BgConfig *bgConfig, u8 bgId);
+u8 GetBgPriority(BgConfig *bgConfig, u8 bgId);
+void BlitBitmapRect4Bit(const Bitmap *src, const Bitmap *dest, u16 srcX, u16 srcY, u16 destX, u16 destY, u16 width, u16 height, u16 colorKey);
+Window *AllocWindows(HeapID heapId, s32 num);
+void InitWindow(Window *window);
+BOOL WindowIsInUse(const Window *window);
+void AddWindowParameterized(BgConfig *bgConfig, Window *window, u8 bgId, u8 x, u8 y, u8 width, u8 height, u8 paletteNum, u16 baseTile);
+void AddTextWindowTopLeftCorner(BgConfig *bgConfig, Window *window, u8 width, u8 height, u16 baseTile, u8 paletteNum);
+void AddWindow(BgConfig *bgConfig, Window *window, const WindowTemplate *template);
+void RemoveWindow(Window *window);
+void WindowArray_Delete(Window *windows, s32 count);
+void CopyWindowToVram(Window *window);
+void ScheduleWindowCopyToVram(Window *window);
+void PutWindowTilemap(Window *window);
+void ClearWindowTilemap(Window *window);
+void CopyWindowPixelsToVram_TextMode(Window *window);
+void ClearWindowTilemapAndCopyToVram(Window *window);
+void ClearWindowTilemapAndScheduleTransfer(Window *window);
+void FillWindowPixelBuffer(Window *window, u8 fillValue);
+void FillWindowPixelBufferText_AssumeTileSize32(Window *window, u8 fillValue);
+void BlitBitmapRectToWindow(Window *window, void *src, u16 srcX, u16 srcY, u16 srcWidth, u16 srcHeight, u16 destX, u16 destY, u16 destWidth, u16 destHeight);
+void BlitBitmapRect(Window *window, void *src, u16 srcX, u16 srcY, u16 srcWidth, u16 srcHeight, u16 destX, u16 destY, u16 destWidth, u16 destHeight, u16 colorKey);
+void FillWindowPixelRect(Window *window, u8 fillValue, u16 x, u16 y, u16 width, u16 height);
+void CopyGlyphToWindow(Window *window, u8 *glyphPixels, u16 srcWidth, u16 srcHeight, u16 destX, u16 destY, u16 table);
+void ScrollWindow(Window *window, u8 direction, u8 y, u8 fillValue);
+BgConfig *GetWindowBgConfig(Window *window);
+u8 GetWindowBgId(Window *window);
+u8 GetWindowWidth(Window *window);
+u8 GetWindowHeight(Window *window);
+u8 GetWindowX(Window *window);
+u8 GetWindowY(Window *window);
+u16 GetWindowBaseTile(Window *window);
+void SetWindowX(Window *window, u8 x);
+void SetWindowY(Window *window, u8 y);
+void SetWindowPaletteNum(Window *window, u8 paletteNum);
+void DoScheduledBgGpuUpdates(BgConfig *bgConfig);
+void ScheduleBgTilemapBufferTransfer(BgConfig *bgConfig, u8 bgId);
+void ScheduleSetBgPosText(BgConfig *bgConfig, u8 bgId, enum BgPosAdjustOp op, int value);
+void ScheduleSetBgAffineScale(BgConfig *bgConfig, u8 bgId, enum BgPosAdjustOp op, int value);
+BOOL DoesPixelAtScreenXYMatchPtrVal(BgConfig *bgConfig, u8 bgId, u16 x, u16 y, u16 *src);

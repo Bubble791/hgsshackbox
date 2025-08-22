@@ -168,3 +168,41 @@ typedef struct GraphicsBanks {
     GXVRamTex tex;
     GXVRamTexPltt texpltt;
 } GraphicsBanks;
+
+typedef enum GFBgLayer {
+    GF_BG_LYR_MAIN_0 = 0,
+    GF_BG_LYR_MAIN_1,
+    GF_BG_LYR_MAIN_2,
+    GF_BG_LYR_MAIN_3,
+    GF_BG_LYR_SUB_0,
+    GF_BG_LYR_SUB_1,
+    GF_BG_LYR_SUB_2,
+    GF_BG_LYR_SUB_3,
+    GF_BG_LYR_MAIN_CNT = 4,
+    GF_BG_LYR_SUB_CNT = 4,
+    GF_BG_LYR_MAIN_FIRST = GF_BG_LYR_MAIN_0,
+    GF_BG_LYR_SUB_FIRST = GF_BG_LYR_SUB_0,
+    GF_BG_LYR_MAX = 8,
+
+    GF_BG_LYR_MAIN_0_F = 1 << (GF_BG_LYR_MAIN_0 - GF_BG_LYR_MAIN_FIRST),
+    GF_BG_LYR_MAIN_1_F = 1 << (GF_BG_LYR_MAIN_1 - GF_BG_LYR_MAIN_FIRST),
+    GF_BG_LYR_MAIN_2_F = 1 << (GF_BG_LYR_MAIN_2 - GF_BG_LYR_MAIN_FIRST),
+    GF_BG_LYR_MAIN_3_F = 1 << (GF_BG_LYR_MAIN_3 - GF_BG_LYR_MAIN_FIRST),
+    GF_BG_LYR_SUB_0_F = 1 << (GF_BG_LYR_SUB_0 - GF_BG_LYR_SUB_FIRST),
+    GF_BG_LYR_SUB_1_F = 1 << (GF_BG_LYR_SUB_1 - GF_BG_LYR_SUB_FIRST),
+    GF_BG_LYR_SUB_2_F = 1 << (GF_BG_LYR_SUB_2 - GF_BG_LYR_SUB_FIRST),
+    GF_BG_LYR_SUB_3_F = 1 << (GF_BG_LYR_SUB_3 - GF_BG_LYR_SUB_FIRST),
+
+    GF_BG_LYR_UNALLOC = 0xFF,
+} GFBgLayer;
+
+void GfGfx_SetBanks(const GraphicsBanks *banks);
+void GfGfx_DisableEngineAPlanes(void);
+void GfGfx_EngineATogglePlanes(u8 planeMask, u8 enable);
+void GfGfx_EngineASetPlanes(u32 planes);
+void GfGfx_DisableEngineBPlanes(void);
+void GfGfx_EngineBTogglePlanes(u8 planeMask, u8 enable);
+void GfGfx_EngineBSetPlanes(u32 planes);
+void GfGfx_BothDispOn(void);
+void GfGfx_SwapDisplay(void);
+u32 GfGfx_EngineAGetPlanes(void);
