@@ -29,7 +29,8 @@ PYTHON = python3
 default: all
 
 ####################### Tools #######################
-ARMIPS := tools/armips/build/armips
+ARMIPS 	:= tools/armips
+GFX		:= tools/nitrogfx/nitrogfx
 
 # Compiler/Assembler/Linker settings
 LDFLAGS = rom.ld -T linker.ld
@@ -59,13 +60,14 @@ $(BUILD)/%.d: asm/%.s
 
 $(BUILD)/%.o: src/%.c
 	@mkdir -p $(BUILD)
-	@echo -e "Compiling"
 	$(CC) $(CFLAGS) -I lib/include -I include -I include/library $(GLB_DEFINES) -c $< -o $@
 
 $(LINK):$(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS)
 
-all: $(LINK)
+include files.mk
+
+all: $(OBJS) hackBox.narc
 	$(ARMIPS) main.s
 
 clean:

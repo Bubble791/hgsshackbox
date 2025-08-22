@@ -1,4 +1,7 @@
 // overlay43 朋友手册的overlay
+// 理论上可以同时占用wifi_2dmapsys （overlay42）的位置，朋友手册加载的时候会先加载wifi_2dmapsys
+// 起始地址02227060, 大小11904 + 21248
+
 #include "global.h"
 
 #include "bg_window.h"
@@ -50,9 +53,9 @@ static BgTemplate bgTemplate[] =
     }
 };
 
-static void NamingScreen_InitObjCharPlttTransfer(void);
-static void NamingScreen_ToggleGfxPlanes(BOOL enable);
-static void NamingScreen_VBlankCB(void *param);
+static void HackBox_InitObjCharPlttTransfer(void);
+static void HackBox_ToggleGfxPlanes(BOOL enable);
+static void HackBox_VBlankCB(void *param);
 
 // 初始化
 BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
@@ -64,16 +67,19 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
     GfGfx_DisableEngineBPlanes();
     GX_SetVisiblePlane(0);
     GXS_SetVisiblePlane(0);
-    CreateHeap(HEAPID_BASE_APP, HEAP_ID_HACK_BOX, 0x28000);
+    CreateHeap(HEAPID_BASE_APP, HEAP_ID_HACK_BOX, 0x20000);
 
     data = OverlayManager_CreateAndGetData(ovyMan, sizeof(HackBoxTool), HEAP_ID_HACK_BOX);
     memset(data, 0, sizeof(HackBoxTool));
 
     data->bgConfig = BgConfig_Alloc(HEAP_ID_HACK_BOX);
     data->msgFormat = MessageFormat_New(HEAP_ID_HACK_BOX);
+    // 加载文本文件
+    // data->msgData_249 = NewMsgDataFromNarc(MSGDATA_LOAD_DIRECT, NARC_msgdata_msg, NARC_msg_msg_0249_bin, HEAP_ID_NAMING_SCREEN);
 
     SetKeyRepeatTimers(4, 8);
 
+    // gfx初始化
     GraphicsBanks graphicsBanks = {
         GX_VRAM_BG_128_A,
         GX_VRAM_BGEXTPLTT_NONE,
@@ -88,6 +94,7 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
     };
     GfGfx_SetBanks(&graphicsBanks);
 
+    // 图层模式管理
     GraphicsModes graphicsModes = {
         GX_DISPMODE_GRAPHICS,
         GX_BGMODE_0,
@@ -102,18 +109,24 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
         InitBgFromTemplate(data->bgConfig, i, &bgTemplate[i], GF_BG_TYPE_TEXT);
         BgClearTilemapBufferAndCommit(data->bgConfig, i);
     }
-    NamingScreen_ToggleGfxPlanes(FALSE);
+    HackBox_ToggleGfxPlanes(FALSE);
     G2S_BlendNone();
 
     // 字体初始化
     FontID_Alloc(2, HEAP_ID_HACK_BOX);
-    Main_SetVBlankIntrCB(NamingScreen_VBlankCB, NULL);
-    NamingScreen_InitObjCharPlttTransfer();
+
+    // 加载图形资源
+
+
+    // Vblank回调
+    Main_SetVBlankIntrCB(HackBox_VBlankCB, NULL);
+    // obj资源管理器初始化
+    HackBox_InitObjCharPlttTransfer();
 
     return TRUE;
 }
 
-static void NamingScreen_ToggleGfxPlanes(BOOL enable)
+static void HackBox_ToggleGfxPlanes(BOOL enable)
 {
     GfGfx_EngineATogglePlanes(GX_PLANEMASK_BG0, enable);
     GfGfx_EngineATogglePlanes(GX_PLANEMASK_BG1, enable);
@@ -125,14 +138,14 @@ static void NamingScreen_ToggleGfxPlanes(BOOL enable)
     GfGfx_EngineBTogglePlanes(GX_PLANEMASK_OBJ, FALSE);
 }
 
-static void NamingScreen_VBlankCB(void *param)
+static void HackBox_VBlankCB(void *param)
 {
     GF_RunVramTransferTasks();
     OamManager_ApplyAndResetBuffers();
     OS_SetIrqCheckFlag(OS_IE_V_BLANK);
 }
 
-static void NamingScreen_InitObjCharPlttTransfer(void)
+static void HackBox_InitObjCharPlttTransfer(void)
 {
     ObjCharTransferTemplate tmplate = {
         .maxTasks = 20,
