@@ -7,7 +7,7 @@
 
 .area 0x5300
 .importobj "build/hackBox.o"
-.endarea
+
 
 .include "macro/thumb_help.s"
 
@@ -17,4 +17,5 @@ bx lr
 
 .org 0x02229EE0 + 0x5300 - 1
 .byte 0
+.endarea
 .close

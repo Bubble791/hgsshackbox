@@ -35,7 +35,7 @@ GFX		:= tools/nitrogfx/nitrogfx
 # Compiler/Assembler/Linker settings
 LDFLAGS = rom.ld -T linker.ld
 ASFLAGS = -mthumb -I ./data
-CFLAGS = -mthumb -mno-thumb-interwork -mcpu=arm7tdmi -mtune=arm7tdmi -march=armv4t -Wall -Wextra -Wno-parentheses -Wno-sign-compare -Wno-multichar -Wno-unused-parameter -Wno-builtin-declaration-mismatch -Wno-sequence-point -Wno-ignored-qualifiers -Wno-address-of-packed-member -Wno-old-style-declaration -Os -fira-loop-pressure -fipa-pta
+CFLAGS = -mthumb -mno-thumb-interwork -mcpu=arm7tdmi -mtune=arm7tdmi -march=armv4t -Wall -Wextra -Wno-parentheses -Wno-sign-compare -Wno-multichar -Wno-unused-parameter -Wno-builtin-declaration-mismatch -Wno-sequence-point -Wno-ignored-qualifiers -Wno-address-of-packed-member -Wno-old-style-declaration -Os -fira-loop-pressure -fipa-pta -fno-short-enums
 GLB_DEFINES := -DSDK_ARM9 -DSDK_CODE_ARM -DSDK_FINALROM
 
 ####################### Output #######################

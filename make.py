@@ -40,5 +40,6 @@ with open("output.sym", "r", encoding="utf-8") as sym:
 
 ChangeArm9Word(0x020FA2A4, symTable["HackBoxTool_Init"] + 1)
 ChangeArm9Word(0x020FA2A8, symTable["HackBoxTool_Main"] + 1)
+ChangeArm9Word(0x020FA2AC, symTable["HackBoxTool_Exit"] + 1)
 
 rom.saveToFile(output_path)

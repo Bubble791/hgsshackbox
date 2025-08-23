@@ -189,10 +189,10 @@ enum {
 };
 
 typedef struct GraphicsModes {
-    GXDispMode dispMode;
-    GXBGMode bgMode;
-    GXBGMode subMode;
-    GXBG0As _2d3dMode;
+    int dispMode;
+    int bgMode;
+    int subMode;
+    int _2d3dMode;
 } GraphicsModes;
 
 #define TILEMAP_COPY_SRC_FLAT 0 // Source dimensions are equal to dest dimensions

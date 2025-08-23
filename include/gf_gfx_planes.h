@@ -36,16 +36,16 @@ typedef enum GFBgLayer {
 } GFBgLayer;
 
 typedef struct GraphicsBanks {
-    GXVRamBG bg;
-    GXVRamBGExtPltt bgextpltt;
-    GXVRamSubBG subbg;
-    GXVRamSubBGExtPltt subbgextpltt;
-    GXVRamOBJ obj;
-    GXVRamOBJExtPltt objextpltt;
-    GXVRamSubOBJ subobj;
-    GXVRamSubOBJExtPltt subobjextpltt;
-    GXVRamTex tex;
-    GXVRamTexPltt texpltt;
+    int bg;
+    int bgextpltt;
+    int subbg;
+    int subbgextpltt;
+    int obj;
+    int objextpltt;
+    int subobj;
+    int subobjextpltt;
+    int tex;
+    int texpltt;
 } GraphicsBanks;
 
 void GfGfx_SetBanks(const GraphicsBanks *banks);
