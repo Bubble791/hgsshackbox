@@ -10,13 +10,12 @@
 .importobj "build/hackBox.o"
 
 .include "macro/thumb_help.s"
+.include "macro/text.s"
 
+.align 4
 debugsyscall:
 swi 0xFC
 bx lr
-
-gText_titleName:
-    .string "Hack Box$"
 
 .org 0x02229EE0 + 0x5300 - 1
 .byte 0

@@ -52,3 +52,9 @@
 .definethumblabel FillWindowPixelBuffer, 0x0201D978
 .definethumblabel AddTextPrinterParameterizedWithColor, 0x020200FC
 .definethumblabel CopyWindowToVram, 0x0201D578
+.definethumblabel TouchscreenListMenuSpawner_Create, 0x02018424
+.definethumblabel GfGfxLoader_LoadFromOpenNarc, 0x02007C98
+.definethumblabel GetBgTilemapBuffer, 0x0201CC08
+.definethumblabel BG_LoadScreenTilemapData, 0x0201C0A8
+.definethumblabel Heap_Free, 0x0201AB0C
+.definethumblabel BgCopyOrUncompressTilemapBufferRangeToVram, 0x0201BF94

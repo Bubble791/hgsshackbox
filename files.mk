@@ -4,8 +4,9 @@
 %.NCLR: %.png
 	$(GFX) $< $@ $(GFX_FLAGS)
 
-NARC_FILE := graphic/bottom_bg.NCGR \
-			graphic/top_bg.NCGR \
-			graphic/top_bg.NCLR \
+%.NSCR: %.bin
+	$(GFX) $< $@ $(GFX_FLAGS)
+
+NARC_FILE := 
 
 hackBox.narc : $(NARC_FILE)

@@ -27,7 +27,7 @@
 #include "unk_0200B150.h"
 #include "unk_0200FA24.h"
 #include "unk_02013534.h"
-#include "unk_020163E0.h"
+#include "touchscreen_list_menu.h"
 #include "vram_transfer_manager.h"
 
 #define HEAPID_BASE_APP 3
@@ -44,7 +44,9 @@ typedef struct HackBoxTool
 	GF_2DGfxResMan *gfxResMen[4];
 	SpriteResource *gfxResObjs[2][4];
 	Window titleWindow;
+	Window infoWindow;
 	String *textString;
+	TouchscreenListMenuSpawner *menuSpawner;
 } HackBoxTool;
 
 const GraphicsBanks graphicsBanks = {
@@ -115,8 +117,10 @@ static void HackBox_VBlankCB(void *param);
 static void HackBoxTool_DrawSprite(HackBoxTool *hackBox);
 static void HackBoxTool_DrawWindow(HackBoxTool *hackBox);
 static void HackBox_LoadString(u16 *stringPtr, String *outString);
+static void HackBox_Load4BPPScreen(HackBoxTool *hackBox, int fileIndex, u8 bgLayout, int size);
 
 extern u16 gText_titleName[];
+extern u16 gText_InfoText[];
 
 // 初始化
 BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
@@ -124,7 +128,7 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
     HackBoxTool *data;
     Main_SetVBlankIntrCB(NULL, NULL);
 
-    CreateHeap(HEAPID_BASE_APP, HEAP_ID_HACK_BOX, 0x20000);
+    CreateHeap(HEAPID_BASE_APP, HEAP_ID_HACK_BOX, 0x30000);
 
     data = OverlayManager_CreateAndGetData(ovyMan, sizeof(HackBoxTool), HEAP_ID_HACK_BOX);
     memset(data, 0, sizeof(HackBoxTool));
@@ -157,14 +161,14 @@ static void HackBoxTool_DrawScreen(HackBoxTool *hackBox)
     }
 
     GfGfxLoader_GXLoadPalFromOpenNarc(hackBox->fileHandle, 5, GF_PAL_LOCATION_MAIN_BG, (enum GFPalSlotOffset)0, 11 * 32, HEAP_ID_HACK_BOX);
-    GfGfxLoader_GXLoadPalFromOpenNarc(hackBox->fileHandle, 4, GF_PAL_LOCATION_SUB_BG, (enum GFPalSlotOffset)0, 11 * 32, HEAP_ID_HACK_BOX);
+    GfGfxLoader_GXLoadPalFromOpenNarc(hackBox->fileHandle, 5, GF_PAL_LOCATION_SUB_BG, (enum GFPalSlotOffset)0, 11 * 32, HEAP_ID_HACK_BOX);
 
     GfGfxLoader_LoadCharDataFromOpenNarc(hackBox->fileHandle, 7, hackBox->bgConfig, GF_BG_LYR_MAIN_1, 0, 0, TRUE, HEAP_ID_HACK_BOX);
 	GfGfxLoader_LoadCharDataFromOpenNarc(hackBox->fileHandle, 7, hackBox->bgConfig, 2, 0, 0, TRUE, HEAP_ID_HACK_BOX);
-	GfGfxLoader_LoadCharDataFromOpenNarc(hackBox->fileHandle, 6, hackBox->bgConfig, 6, 0, 0, TRUE, HEAP_ID_HACK_BOX);
+	GfGfxLoader_LoadCharDataFromOpenNarc(hackBox->fileHandle, 7, hackBox->bgConfig, 6, 0, 0, TRUE, HEAP_ID_HACK_BOX);
 
-    GfGfxLoader_LoadScrnDataFromOpenNarc(hackBox->fileHandle, 10, hackBox->bgConfig, GF_BG_LYR_MAIN_1, 0, 0, TRUE, HEAP_ID_HACK_BOX);
-	GfGfxLoader_LoadScrnDataFromOpenNarc(hackBox->fileHandle, 8, hackBox->bgConfig, 6, 0, 0, TRUE, HEAP_ID_HACK_BOX);
+	HackBox_Load4BPPScreen(hackBox, 14, GF_BG_LYR_MAIN_1, 2048);
+	HackBox_Load4BPPScreen(hackBox, 11, GF_BG_LYR_SUB_2, 2048);
 
 	// NARC_Delete(hackBox->fileHandle);
 }
@@ -198,24 +202,30 @@ static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
 {
 	hackBox->msgFormat = MessageFormat_New(HEAP_ID_HACK_BOX);
 	hackBox->msgData = NewMsgDataFromNarc(MSGDATA_LOAD_DIRECT, NARC_msgdata_msg, 249, HEAP_ID_HACK_BOX);
-	FontID_Alloc(2, HEAP_ID_HACK_BOX);
+	FontID_Alloc(0, HEAP_ID_HACK_BOX);
 
     LoadFontPal1(GF_PAL_LOCATION_MAIN_BG, (enum GFPalSlotOffset)0x180, HEAP_ID_HACK_BOX);
     LoadUserFrameGfx2(hackBox->bgConfig, GF_BG_LYR_SUB_0, 0x100, 10, 0, HEAP_ID_HACK_BOX);
     LoadFontPal1(GF_PAL_LOCATION_SUB_BG, (enum GFPalSlotOffset)0x180, HEAP_ID_HACK_BOX);
 
-	InitWindow(&hackBox->titleWindow);
-	AddWindowParameterized(hackBox->bgConfig, &hackBox->titleWindow, GF_BG_LYR_MAIN_0, 1, 0, 24, 3, 11, 20);
+	hackBox->menuSpawner = TouchscreenListMenuSpawner_Create(HEAP_ID_HACK_BOX, 0);
+	// 标题部分
+	AddWindowParameterized(hackBox->bgConfig, &hackBox->titleWindow, GF_BG_LYR_MAIN_0, 1, 0, 8, 3, 11, 20);
 	// hackBox->textString = NewString_ReadMsgData(hackBox->msgData, 7);
 	hackBox->textString = String_New(128, HEAP_ID_HACK_BOX);
-	hackBox->textString->size = 20;
-	hackBox->textString->maxsize = 20;
 	HackBox_LoadString(gText_titleName, hackBox->textString);
-	// TouchscreenListMenuSpawner_Create
 
 	FillWindowPixelBuffer(&hackBox->titleWindow, 0);
-    AddTextPrinterParameterizedWithColor(&hackBox->titleWindow, 0, hackBox->textString, 7, 0, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(14, 15, 0), NULL);
+    AddTextPrinterParameterizedWithColor(&hackBox->titleWindow, 0, hackBox->textString, 7, 4, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 2, 0), NULL);
     CopyWindowToVram(&hackBox->titleWindow);
+
+	// 介绍部分
+	AddWindowParameterized(hackBox->bgConfig, &hackBox->infoWindow, GF_BG_LYR_MAIN_0, 6, 7, 20, 10, 11, 20 + 24);
+	HackBox_LoadString(gText_InfoText, hackBox->textString);
+
+	FillWindowPixelBuffer(&hackBox->infoWindow, 0);
+    AddTextPrinterParameterizedWithColor(&hackBox->infoWindow, 0, hackBox->textString, 7, 4, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 2, 0), NULL);
+    CopyWindowToVram(&hackBox->infoWindow);
 }
 
 static void HackBox_VBlankCB(void *param)
@@ -226,6 +236,7 @@ static void HackBox_VBlankCB(void *param)
     OamManager_ApplyAndResetBuffers();
 }
 
+// 功能性函数
 static void HackBox_LoadString(u16 *stringPtr, String *outString)
 {
 	int index;
@@ -238,6 +249,18 @@ static void HackBox_LoadString(u16 *stringPtr, String *outString)
 	}
 	outString->maxsize = index;
 	outString->size = index;
+}
+
+static void HackBox_Load4BPPScreen(HackBoxTool *hackBox, int fileIndex, u8 bgLayout, int size)
+{
+	void *rawData = GfGfxLoader_LoadFromOpenNarc(hackBox->fileHandle, fileIndex, FALSE, HEAP_ID_HACK_BOX, FALSE);
+	void *bgTilemapBuffer = GetBgTilemapBuffer(hackBox->bgConfig, bgLayout);
+
+	if (bgTilemapBuffer != NULL) {
+		BG_LoadScreenTilemapData(hackBox->bgConfig, (u8)bgLayout, rawData, size);
+		BgCopyOrUncompressTilemapBufferRangeToVram(hackBox->bgConfig, (u8)bgLayout, rawData, size, 0);
+	}
+	Heap_Free(rawData);
 }
 
 BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
