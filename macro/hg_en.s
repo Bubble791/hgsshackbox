@@ -8,6 +8,7 @@
 .definearmlabel MIi_CpuCopy32, 0x020D4808
 .definearmlabel MI_CpuFill8, 0x020D4994
 .definearmlabel GX_DispOn, 0x020CD9B4
+.definearmlabel NNS_G2dInitOamManagerModule, 0x020B78D4
 
 .definethumblabel GF_RunVramTransferTasks, 0x0202061C
 .definethumblabel OamManager_ApplyAndResetBuffers, 0x0200B224
@@ -28,6 +29,26 @@
 .definethumblabel BeginNormalPaletteFade, 0x0200FA24
 .definethumblabel GfGfx_SwapDisplay, 0x02022D3C
 .definethumblabel NARC_Delete, 0x0200770C
-.definethumblabel NNS_G2dInitOamManagerModule, 0x020B78D4
 .definethumblabel GF_CreateVramTransferManager, 0x0202055C
 .definethumblabel DoScheduledBgGpuUpdates, 0x0201EEB4
+.definethumblabel OamManager_Create, 0x0200B150
+.definethumblabel ObjCharTransfer_Init, 0x020215A0
+.definethumblabel ObjPlttTransfer_Init, 0x02022588
+.definethumblabel ObjCharTransfer_ClearBuffers, 0x020216C8
+.definethumblabel ObjPlttTransfer_Reset, 0x02022638
+.definethumblabel G2dRenderer_Init, 0x02009F40
+.definethumblabel G2dRenderer_SetSubSurfaceCoords, 0x02009FC8
+.definethumblabel Create2DGfxResObjMan, 0x0200A090
+.definethumblabel MessageFormat_New, 0x0200BD08
+.definethumblabel NewMsgDataFromNarc, 0x0200BAF8
+.definethumblabel FontID_Alloc, 0x02002CEC
+.definethumblabel LoadFontPal1, 0x0200304C
+.definethumblabel LoadUserFrameGfx2, 0x0200E644
+.definethumblabel InitWindow, 0x0201D3C4
+.definethumblabel AddWindowParameterized, 0x0201D40C
+.definethumblabel String_New, 0x02026354
+.definethumblabel GfGfx_EngineATogglePlanes, 0x02022C60
+.definethumblabel NewString_ReadMsgData, 0x0200BBA0
+.definethumblabel FillWindowPixelBuffer, 0x0201D978
+.definethumblabel AddTextPrinterParameterizedWithColor, 0x020200FC
+.definethumblabel CopyWindowToVram, 0x0201D578

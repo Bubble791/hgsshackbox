@@ -37,20 +37,51 @@ typedef struct HackBoxTool
 {
     BgConfig *bgConfig;
     NARC *fileHandle;
-    void *msgFormat;
+    MessageFormat *msgFormat;
+	MsgData *msgData;
+	SpriteList *spriteList;
+    G2dRenderer g2dRender;
+	GF_2DGfxResMan *gfxResMen[4];
+	SpriteResource *gfxResObjs[2][4];
+	Window titleWindow;
+	String *textString;
 } HackBoxTool;
+
+const GraphicsBanks graphicsBanks = {
+	GX_VRAM_BG_256_AB,
+	GX_VRAM_BGEXTPLTT_NONE,
+
+	GX_VRAM_SUB_BG_128_C,
+	GX_VRAM_SUB_BGEXTPLTT_NONE,
+
+	GX_VRAM_OBJ_80_EF,
+	GX_VRAM_OBJEXTPLTT_NONE,
+
+	GX_VRAM_SUB_OBJ_16_I,
+	GX_VRAM_SUB_OBJEXTPLTT_NONE,
+
+	GX_VRAM_TEX_NONE,
+	GX_VRAM_TEXPLTT_NONE
+};
+
+const GraphicsModes graphicsModes = {
+	GX_DISPMODE_GRAPHICS,
+	GX_BGMODE_0,
+	GX_BGMODE_0,
+	GX_BG0_AS_2D,
+};
 
 static const BgTemplate sHackBoxBgTemplate[] =
 {
 	{	// DFRM_BACK
 		0, 0, 0x800, 0, GF_BG_SCR_SIZE_256x256, GX_BG_COLORMODE_16,
 		GX_BG_SCRBASE_0xc000, GX_BG_CHARBASE_0x00000, GX_BG_EXTPLTT_01,
-		3, 0, 0, FALSE
+		0, 0, 0, FALSE
 	},
 	{	// DFRM_MSG
 		0, 0, 0x800, 0, GF_BG_SCR_SIZE_256x256, GX_BG_COLORMODE_16,
 		GX_BG_SCRBASE_0xc800, GX_BG_CHARBASE_0x04000, GX_BG_EXTPLTT_01,
-		0, 0, 0, FALSE
+		3, 0, 0, FALSE
 	},
 	{	// DFRM_SCROLL
 		0, 0, 0x1000, 0, GF_BG_SCR_SIZE_512x256, GX_BG_COLORMODE_16,
@@ -80,7 +111,12 @@ static const BgTemplate sHackBoxBgTemplate[] =
 };
 
 static void HackBoxTool_DrawScreen(HackBoxTool *hackBox);
-static void HackBox_VBlankCB(HackBoxTool *param);
+static void HackBox_VBlankCB(void *param);
+static void HackBoxTool_DrawSprite(HackBoxTool *hackBox);
+static void HackBoxTool_DrawWindow(HackBoxTool *hackBox);
+static void HackBox_LoadString(u16 *stringPtr, String *outString);
+
+extern u16 gText_titleName[];
 
 // 初始化
 BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
@@ -94,44 +130,23 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
     memset(data, 0, sizeof(HackBoxTool));
 
     HackBoxTool_DrawScreen(data);
+	HackBoxTool_DrawSprite(data);
+	HackBoxTool_DrawWindow(data);
+
+	GfGfx_EngineATogglePlanes(GX_PLANEMASK_OBJ, TRUE);
     Main_SetVBlankIntrCB(HackBox_VBlankCB, NULL);
 	HBlankInterruptDisable();
 
+	BeginNormalPaletteFade(0, 1, 1, RGB_BLACK, 16, 1, HEAP_ID_HACK_BOX);
     return TRUE;
 }
-
-const GraphicsBanks graphicsBanks = {
-	GX_VRAM_BG_256_AB,
-	GX_VRAM_BGEXTPLTT_NONE,
-
-	GX_VRAM_SUB_BG_128_C,
-	GX_VRAM_SUB_BGEXTPLTT_NONE,
-
-	GX_VRAM_OBJ_80_EF,
-	GX_VRAM_OBJEXTPLTT_NONE,
-
-	GX_VRAM_SUB_OBJ_16_I,
-	GX_VRAM_SUB_OBJEXTPLTT_NONE,
-
-	GX_VRAM_TEX_NONE,
-	GX_VRAM_TEXPLTT_NONE
-};
-
-const GraphicsModes graphicsModes = {
-	GX_DISPMODE_GRAPHICS,
-	GX_BGMODE_0,
-	GX_BGMODE_0,
-	GX_BG0_AS_2D,
-};
 
 static void HackBoxTool_DrawScreen(HackBoxTool *hackBox)
 {
     hackBox->fileHandle = NARC_New(85, HEAP_ID_HACK_BOX);
-
-    GfGfx_SetBanks(&graphicsBanks);
-
     hackBox->bgConfig = BgConfig_Alloc(HEAP_ID_HACK_BOX);
 
+    GfGfx_SetBanks(&graphicsBanks);
     SetBothScreensModesAndDisable(&graphicsModes);
 
     for (int i = 0; i < NELEMS(sHackBoxBgTemplate); i++)
@@ -144,22 +159,85 @@ static void HackBoxTool_DrawScreen(HackBoxTool *hackBox)
     GfGfxLoader_GXLoadPalFromOpenNarc(hackBox->fileHandle, 5, GF_PAL_LOCATION_MAIN_BG, (enum GFPalSlotOffset)0, 11 * 32, HEAP_ID_HACK_BOX);
     GfGfxLoader_GXLoadPalFromOpenNarc(hackBox->fileHandle, 4, GF_PAL_LOCATION_SUB_BG, (enum GFPalSlotOffset)0, 11 * 32, HEAP_ID_HACK_BOX);
 
-    GfGfxLoader_LoadCharDataFromOpenNarc(hackBox->fileHandle, 7, hackBox->bgConfig, 0, 0, 0, TRUE, HEAP_ID_HACK_BOX);
+    GfGfxLoader_LoadCharDataFromOpenNarc(hackBox->fileHandle, 7, hackBox->bgConfig, GF_BG_LYR_MAIN_1, 0, 0, TRUE, HEAP_ID_HACK_BOX);
 	GfGfxLoader_LoadCharDataFromOpenNarc(hackBox->fileHandle, 7, hackBox->bgConfig, 2, 0, 0, TRUE, HEAP_ID_HACK_BOX);
 	GfGfxLoader_LoadCharDataFromOpenNarc(hackBox->fileHandle, 6, hackBox->bgConfig, 6, 0, 0, TRUE, HEAP_ID_HACK_BOX);
 
-    GfGfxLoader_LoadScrnDataFromOpenNarc(hackBox->fileHandle, 10, hackBox->bgConfig, 0, 0, 0, TRUE, HEAP_ID_HACK_BOX);
+    GfGfxLoader_LoadScrnDataFromOpenNarc(hackBox->fileHandle, 10, hackBox->bgConfig, GF_BG_LYR_MAIN_1, 0, 0, TRUE, HEAP_ID_HACK_BOX);
 	GfGfxLoader_LoadScrnDataFromOpenNarc(hackBox->fileHandle, 8, hackBox->bgConfig, 6, 0, 0, TRUE, HEAP_ID_HACK_BOX);
 
-	NARC_Delete(hackBox->fileHandle);
-	BeginNormalPaletteFade(0, 1, 1, RGB_BLACK, 16, 1, HEAP_ID_HACK_BOX);
+	// NARC_Delete(hackBox->fileHandle);
 }
 
-static void HackBox_VBlankCB(HackBoxTool *param)
+static void HackBoxTool_DrawSprite(HackBoxTool *hackBox)
 {
-	DoScheduledBgGpuUpdates(param->bgConfig);
+	NNS_G2dInitOamManagerModule();
+	GF_CreateVramTransferManager(16, HEAP_ID_HACK_BOX);
+	OamManager_Create(0, 128, 0, 32, 0, 128, 0, 32, HEAP_ID_HACK_BOX);
+
+	ObjCharTransferTemplate tmplate = {
+        .maxTasks = 20,
+        .sizeMain = 0x800,
+        .sizeSub = 0x800,
+        .heapId = HEAP_ID_HACK_BOX,
+    };
+    ObjCharTransfer_Init(&tmplate);
+	ObjPlttTransfer_Init(20, HEAP_ID_HACK_BOX);
+	ObjCharTransfer_ClearBuffers();
+    ObjPlttTransfer_Reset();
+
+	hackBox->spriteList = G2dRenderer_Init(44, &hackBox->g2dRender, HEAP_ID_HACK_BOX);
+	G2dRenderer_SetSubSurfaceCoords(&hackBox->g2dRender, 0, FX32_CONST(256));
+
+	for (int i = 0; i < 4; ++i)
+        hackBox->gfxResMen[i] = Create2DGfxResObjMan(2, (GfGfxResType)i, HEAP_ID_HACK_BOX);
+
+}
+
+static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
+{
+	hackBox->msgFormat = MessageFormat_New(HEAP_ID_HACK_BOX);
+	hackBox->msgData = NewMsgDataFromNarc(MSGDATA_LOAD_DIRECT, NARC_msgdata_msg, 249, HEAP_ID_HACK_BOX);
+	FontID_Alloc(2, HEAP_ID_HACK_BOX);
+
+    LoadFontPal1(GF_PAL_LOCATION_MAIN_BG, (enum GFPalSlotOffset)0x180, HEAP_ID_HACK_BOX);
+    LoadUserFrameGfx2(hackBox->bgConfig, GF_BG_LYR_SUB_0, 0x100, 10, 0, HEAP_ID_HACK_BOX);
+    LoadFontPal1(GF_PAL_LOCATION_SUB_BG, (enum GFPalSlotOffset)0x180, HEAP_ID_HACK_BOX);
+
+	InitWindow(&hackBox->titleWindow);
+	AddWindowParameterized(hackBox->bgConfig, &hackBox->titleWindow, GF_BG_LYR_MAIN_0, 1, 0, 24, 3, 11, 20);
+	// hackBox->textString = NewString_ReadMsgData(hackBox->msgData, 7);
+	hackBox->textString = String_New(128, HEAP_ID_HACK_BOX);
+	hackBox->textString->size = 20;
+	hackBox->textString->maxsize = 20;
+	HackBox_LoadString(gText_titleName, hackBox->textString);
+	// TouchscreenListMenuSpawner_Create
+
+	FillWindowPixelBuffer(&hackBox->titleWindow, 0);
+    AddTextPrinterParameterizedWithColor(&hackBox->titleWindow, 0, hackBox->textString, 7, 0, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(14, 15, 0), NULL);
+    CopyWindowToVram(&hackBox->titleWindow);
+}
+
+static void HackBox_VBlankCB(void *param)
+{
+	HackBoxTool *hackBox = param;
+	DoScheduledBgGpuUpdates(hackBox->bgConfig);
     GF_RunVramTransferTasks();
     OamManager_ApplyAndResetBuffers();
+}
+
+static void HackBox_LoadString(u16 *stringPtr, String *outString)
+{
+	int index;
+
+	for (index = 0;; index++, stringPtr++)
+	{
+		outString->data[index] = *stringPtr;
+		if (*stringPtr == 0xFFFF)
+			break;
+	}
+	outString->maxsize = index;
+	outString->size = index;
 }
 
 BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
