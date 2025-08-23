@@ -1,10 +1,18 @@
 .nds
 .thumb
 
-.create "overlay_43.bin", 0x02229EE0
+.include "macro/hg_en.s"
 
-.area 21248
+.create "build/new_overlay.bin", 0x02229EE0
+
+.area 0x5300
 .importobj "build/hackBox.o"
 .endarea
 
+debugsyscall:
+swi 0xFC
+bx lr
+
+.org 0x02229EE0 + 0x5300 - 1
+.byte 0
 .close

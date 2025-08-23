@@ -4,3 +4,7 @@
 *.NCGR
 *.NCLR
 *.4bpp
+*.nds
+hand.txt
+HGSS_EU.txt
+output.sym

@@ -68,7 +68,8 @@ $(LINK):$(OBJS)
 include files.mk
 
 all: $(OBJS) hackBox.narc
-	$(ARMIPS) main.s
+	$(ARMIPS) main.s -sym2 output.sym
+	python3 make.py rom.nds game_patched.nds
 
 clean:
 	rm -rf $(BUILD)

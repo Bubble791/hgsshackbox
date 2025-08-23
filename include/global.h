@@ -32,4 +32,8 @@ typedef struct {
 
 #define ARRAY_ASSIGN(dest, src) ARRAY_ASSIGN_EX(dest, src, typeof(*(dest)), NELEMS(dest))
 
+void debugsyscall(u8 *buf);
+void sprintf(u8 *buf, char *str, ...);
+#define debug_printf(...) { u8 buf_assumeunuasedfasdf[128]; sprintf(buf_assumeunuasedfasdf, __VA_ARGS__); debugsyscall(buf_assumeunuasedfasdf); }
+
 #endif // POKEHEARTGOLD_GLOBAL_H
