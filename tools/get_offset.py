@@ -23,11 +23,20 @@ with open("HGSS_EU.txt", "r", encoding="utf-8") as hgss:
                 dirs[func_name.lower()] = {"offset" : address, "name" : func_name}
                 dirs[address]["name"] = func_name.lower()
 
+print_table = []
 with open("hand.txt", "r", encoding="utf-8") as needLoad:
     for text in needLoad.readlines():
         text = text.split("Undefined external symbol")[1].split(" ")[1]
 
         address = dirs[text]["offset"]
-        type = dirs[address]["type"]
+        try:
+            type = dirs[address]["type"]
+        except:
+            type = "definethumblabel"
         fullname = dirs[text]["name"]
-        print(f".{type} {fullname}, 0x{address}")
+        printText = (f".{type} {fullname}, 0x{address}")
+        if printText not in print_table:
+            print_table.append(printText)
+
+for i in print_table:
+    print(i)

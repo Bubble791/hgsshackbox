@@ -9,6 +9,8 @@
 .importobj "build/hackBox.o"
 .endarea
 
+.include "macro/thumb_help.s"
+
 debugsyscall:
 swi 0xFC
 bx lr
