@@ -4,4 +4,4 @@ gText_titleName:
 
 .align 4
 gText_InfoText:
-    .string "Hack Box$"
+    .string "版本 1.0.0$"

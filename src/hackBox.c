@@ -45,6 +45,7 @@ typedef struct HackBoxTool
 	SpriteResource *gfxResObjs[2][4];
 	Window titleWindow;
 	Window infoWindow;
+	Window mainButtonWindow[4];
 	String *textString;
 	TouchscreenListMenuSpawner *menuSpawner;
 } HackBoxTool;
@@ -118,6 +119,7 @@ static void HackBoxTool_DrawSprite(HackBoxTool *hackBox);
 static void HackBoxTool_DrawWindow(HackBoxTool *hackBox);
 static void HackBox_LoadString(u16 *stringPtr, String *outString);
 static void HackBox_Load4BPPScreen(HackBoxTool *hackBox, int fileIndex, u8 bgLayout, int size);
+static void HackBoxTool_DrawSelectButton(HackBoxTool *hackBox);
 
 extern u16 gText_titleName[];
 extern u16 gText_InfoText[];
@@ -136,6 +138,7 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
     HackBoxTool_DrawScreen(data);
 	HackBoxTool_DrawSprite(data);
 	HackBoxTool_DrawWindow(data);
+	HackBoxTool_DrawSelectButton(data);
 
 	GfGfx_EngineATogglePlanes(GX_PLANEMASK_OBJ, TRUE);
     Main_SetVBlankIntrCB(HackBox_VBlankCB, NULL);
@@ -202,7 +205,7 @@ static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
 {
 	hackBox->msgFormat = MessageFormat_New(HEAP_ID_HACK_BOX);
 	hackBox->msgData = NewMsgDataFromNarc(MSGDATA_LOAD_DIRECT, NARC_msgdata_msg, 249, HEAP_ID_HACK_BOX);
-	FontID_Alloc(0, HEAP_ID_HACK_BOX);
+	FontID_Alloc(4, HEAP_ID_HACK_BOX);
 
     LoadFontPal1(GF_PAL_LOCATION_MAIN_BG, (enum GFPalSlotOffset)0x180, HEAP_ID_HACK_BOX);
     LoadUserFrameGfx2(hackBox->bgConfig, GF_BG_LYR_SUB_0, 0x100, 10, 0, HEAP_ID_HACK_BOX);
@@ -226,6 +229,19 @@ static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
 	FillWindowPixelBuffer(&hackBox->infoWindow, 0);
     AddTextPrinterParameterizedWithColor(&hackBox->infoWindow, 0, hackBox->textString, 7, 4, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 2, 0), NULL);
     CopyWindowToVram(&hackBox->infoWindow);
+}
+
+static void HackBoxTool_DrawSelectButton(HackBoxTool *hackBox)
+{
+	u16 startTiles = 20 + 24 + 200;
+	for (int i = 0; i < NELEMS(hackBox->mainButtonWindow); i++)
+	{
+		InitWindow(&hackBox->mainButtonWindow[i]);
+		AddWindowParameterized(hackBox->bgConfig, &hackBox->mainButtonWindow[i], GF_BG_LYR_SUB_0, 1, 0 + i * 4, 8, 3, 11, startTiles + i * 30);
+		FillWindowPixelBuffer(&hackBox->mainButtonWindow[i], 0x11);
+		AddTextPrinterParameterizedWithColor(&hackBox->mainButtonWindow[i], 4, hackBox->textString, 7, 4, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 15, 0), NULL);
+		CopyWindowToVram(&hackBox->mainButtonWindow[i]);
+	}
 }
 
 static void HackBox_VBlankCB(void *param)

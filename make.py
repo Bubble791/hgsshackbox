@@ -43,7 +43,8 @@ ChangeArm9Word(0x020FA2A8, symTable["HackBoxTool_Main"] + 1)
 ChangeArm9Word(0x020FA2AC, symTable["HackBoxTool_Exit"] + 1)
 
 # 修改narc
-narcData = rom.files[214]
+startIndex = rom.filenames.firstID
+narcData = rom.files[startIndex + 85]
 narc = ndspy.narc.NARC(narcData)
 with open('graphic/title.bin', 'rb') as f:
     ncgData = f.read()
@@ -51,6 +52,6 @@ with open('graphic/title.bin', 'rb') as f:
 with open('graphic/button.bin', 'rb') as f:
     ncgData = f.read()
     narc.files[11] = ncgData
-rom.files[214] = narc.save()
+rom.files[startIndex + 85] = narc.save()
 
 rom.saveToFile(output_path)
