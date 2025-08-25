@@ -1,4 +1,5 @@
 .definedatalabel SDK_AUTOLOAD_DTCM_START, 0x027E0000
+.definedatalabel sFontWork, 0x0211188C
 .definearmlabel memcpy, 0x020E5AD8
 .definearmlabel sprintf, 0x020E7F30
 .definearmlabel memset, 0x020E5B44
@@ -58,3 +59,6 @@
 .definethumblabel BG_LoadScreenTilemapData, 0x0201C0A8
 .definethumblabel Heap_Free, 0x0201AB0C
 .definethumblabel BgCopyOrUncompressTilemapBufferRangeToVram, 0x0201BF94
+.definethumblabel FontID_String_GetWidth, 0x02002F30
+.definethumblabel FontData_Delete, 0x02025EC0
+.definethumblabel FontData_New, 0x02025E88

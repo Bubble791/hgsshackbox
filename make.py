@@ -54,4 +54,15 @@ with open('graphic/button.bin', 'rb') as f:
     narc.files[11] = ncgData
 rom.files[startIndex + 85] = narc.save()
 
+# 新增字体narc
+fontNarcData = rom.files[startIndex + 16]
+fontNarc = ndspy.narc.NARC(fontNarcData)
+with open('graphic/font4.bin', 'rb') as f:
+    fontData = f.read()
+    fontNarc.files.append(fontData)
+with open('graphic/font0.bin', 'rb') as f:
+    fontData = f.read()
+    fontNarc.files.append(fontData)
+rom.files[startIndex + 16] = fontNarc.save()
+
 rom.saveToFile(output_path)

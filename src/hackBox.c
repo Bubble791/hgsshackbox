@@ -22,8 +22,8 @@
 #include "systask_environment.h"
 #include "system.h"
 #include "text.h"
-#include "unk_02005D10.h"
-#include "unk_0200ACF0.h"
+#include "font.h"
+#include "font_data.h"
 #include "unk_0200B150.h"
 #include "unk_0200FA24.h"
 #include "unk_02013534.h"
@@ -48,6 +48,7 @@ typedef struct HackBoxTool
 	Window mainButtonWindow[4];
 	String *textString;
 	TouchscreenListMenuSpawner *menuSpawner;
+	int needReloadFont[5];
 } HackBoxTool;
 
 const GraphicsBanks graphicsBanks = {
@@ -120,9 +121,22 @@ static void HackBoxTool_DrawWindow(HackBoxTool *hackBox);
 static void HackBox_LoadString(u16 *stringPtr, String *outString);
 static void HackBox_Load4BPPScreen(HackBoxTool *hackBox, int fileIndex, u8 bgLayout, int size);
 static void HackBoxTool_DrawSelectButton(HackBoxTool *hackBox);
+static void HackBox_LoadFont(HackBoxTool *hackBox, int fontID, int newFiles);
 
 extern u16 gText_titleName[];
 extern u16 gText_InfoText[];
+extern u16 gText_PokemonEdit[];
+extern u16 gText_ItemEdit[];
+extern u16 gText_MoreEdit[];
+extern u16 gText_ExitBox[];
+
+static u16* sChooseText[] = 
+{
+	gText_PokemonEdit,
+	gText_ItemEdit,
+	gText_MoreEdit,
+	gText_ExitBox,
+};
 
 // 初始化
 BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
@@ -205,7 +219,8 @@ static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
 {
 	hackBox->msgFormat = MessageFormat_New(HEAP_ID_HACK_BOX);
 	hackBox->msgData = NewMsgDataFromNarc(MSGDATA_LOAD_DIRECT, NARC_msgdata_msg, 249, HEAP_ID_HACK_BOX);
-	FontID_Alloc(4, HEAP_ID_HACK_BOX);
+	HackBox_LoadFont(hackBox, 4, 10);
+	HackBox_LoadFont(hackBox, 0, 11);
 
     LoadFontPal1(GF_PAL_LOCATION_MAIN_BG, (enum GFPalSlotOffset)0x180, HEAP_ID_HACK_BOX);
     LoadUserFrameGfx2(hackBox->bgConfig, GF_BG_LYR_SUB_0, 0x100, 10, 0, HEAP_ID_HACK_BOX);
@@ -213,17 +228,17 @@ static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
 
 	hackBox->menuSpawner = TouchscreenListMenuSpawner_Create(HEAP_ID_HACK_BOX, 0);
 	// 标题部分
-	AddWindowParameterized(hackBox->bgConfig, &hackBox->titleWindow, GF_BG_LYR_MAIN_0, 1, 0, 8, 3, 11, 20);
+	AddWindowParameterized(hackBox->bgConfig, &hackBox->titleWindow, GF_BG_LYR_MAIN_0, 2, 0, 8, 3, 11, 20);
 	// hackBox->textString = NewString_ReadMsgData(hackBox->msgData, 7);
 	hackBox->textString = String_New(128, HEAP_ID_HACK_BOX);
 	HackBox_LoadString(gText_titleName, hackBox->textString);
 
 	FillWindowPixelBuffer(&hackBox->titleWindow, 0);
-    AddTextPrinterParameterizedWithColor(&hackBox->titleWindow, 0, hackBox->textString, 7, 4, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 2, 0), NULL);
+    AddTextPrinterParameterizedWithColor(&hackBox->titleWindow, 0, hackBox->textString, 2, 7, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 2, 0), NULL);
     CopyWindowToVram(&hackBox->titleWindow);
 
 	// 介绍部分
-	AddWindowParameterized(hackBox->bgConfig, &hackBox->infoWindow, GF_BG_LYR_MAIN_0, 6, 7, 20, 10, 11, 20 + 24);
+	AddWindowParameterized(hackBox->bgConfig, &hackBox->infoWindow, GF_BG_LYR_MAIN_0, 2, 7, 24, 10, 11, 20 + 24);
 	HackBox_LoadString(gText_InfoText, hackBox->textString);
 
 	FillWindowPixelBuffer(&hackBox->infoWindow, 0);
@@ -233,13 +248,15 @@ static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
 
 static void HackBoxTool_DrawSelectButton(HackBoxTool *hackBox)
 {
-	u16 startTiles = 20 + 24 + 200;
+	u16 startTiles = 20 + 24 + 240;
 	for (int i = 0; i < NELEMS(hackBox->mainButtonWindow); i++)
 	{
 		InitWindow(&hackBox->mainButtonWindow[i]);
-		AddWindowParameterized(hackBox->bgConfig, &hackBox->mainButtonWindow[i], GF_BG_LYR_SUB_0, 1, 0 + i * 4, 8, 3, 11, startTiles + i * 30);
-		FillWindowPixelBuffer(&hackBox->mainButtonWindow[i], 0x11);
-		AddTextPrinterParameterizedWithColor(&hackBox->mainButtonWindow[i], 4, hackBox->textString, 7, 4, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 15, 0), NULL);
+		AddWindowParameterized(hackBox->bgConfig, &hackBox->mainButtonWindow[i], GF_BG_LYR_SUB_0, 10, 3 + i * 5, 12, 3, 11, startTiles + i * 36);
+		FillWindowPixelBuffer(&hackBox->mainButtonWindow[i], 0);
+		HackBox_LoadString(sChooseText[i], hackBox->textString);
+		u32 stringWidth = FontID_String_GetWidth(4, hackBox->textString, 0);
+		AddTextPrinterParameterizedWithColor(&hackBox->mainButtonWindow[i], 4, hackBox->textString, 2 + (96 - stringWidth) / 2, 0, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 15, 0), NULL);
 		CopyWindowToVram(&hackBox->mainButtonWindow[i]);
 	}
 }
@@ -264,7 +281,7 @@ static void HackBox_LoadString(u16 *stringPtr, String *outString)
 			break;
 	}
 	outString->maxsize = index;
-	outString->size = index;
+	outString->size = index - 1;
 }
 
 static void HackBox_Load4BPPScreen(HackBoxTool *hackBox, int fileIndex, u8 bgLayout, int size)
@@ -277,6 +294,21 @@ static void HackBox_Load4BPPScreen(HackBoxTool *hackBox, int fileIndex, u8 bgLay
 		BgCopyOrUncompressTilemapBufferRangeToVram(hackBox->bgConfig, (u8)bgLayout, rawData, size, 0);
 	}
 	Heap_Free(rawData);
+}
+
+static void HackBox_LoadFont(HackBoxTool *hackBox, int fontID, int newFiles)
+{
+	// 重新加载字体图片
+	// 默认ROM使用的xzonn的码表，为了保证acg汉化版本能显示正确的字，这里把字体读取成xzonn版本的
+	// 如果字体正在被共用，程序结束后需要重新加载原字库
+	if (sFontWork->fontDataRefCount[fontID] > 0)
+	{
+		FontData_Delete(sFontWork->fontDataMan[fontID]);
+		hackBox->needReloadFont[fontID] = TRUE;
+	}
+	// 日版为11
+	sFontWork->fontDataMan[fontID] = FontData_New(NARC_graphic_font, newFiles, FONTARC_MODE_LAZY, FALSE, HEAP_ID_HACK_BOX);
+	sFontWork->fontDataRefCount[fontID]++;
 }
 
 BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)

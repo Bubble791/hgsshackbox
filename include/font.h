@@ -5,6 +5,15 @@
 
 #define FONT_NUM 6
 
+struct FontWork {
+    struct GlyphInfo glyph_buffer;
+    void *extraData[FONT_NUM];
+    struct FontData *fontDataMan[FONT_NUM];
+    s8 fontDataRefCount[FONT_NUM];
+};
+
+extern struct FontWork *sFontWork;
+
 void FontWork_Init(void);
 void FontID_Alloc(FontID fontId, HeapID heapId);
 void FontID_SetAccessDirect(FontID fontId, HeapID heapId);
