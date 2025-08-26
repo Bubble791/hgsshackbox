@@ -24,7 +24,7 @@ typedef struct SpriteTemplate {
     const SpriteResourcesHeader *header; // 004
     VecFx32 position;                    // 008
     VecFx32 scale;                       // 014
-    u16 rotation;                        // 020
+    u32 rotation;                        // 020
     u32 priority;                        // 024
     NNS_G2D_VRAM_TYPE whichScreen;       // 028
     HeapID heapId;                       // 02C

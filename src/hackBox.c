@@ -28,6 +28,7 @@
 #include "unk_0200FA24.h"
 #include "unk_02013534.h"
 #include "touchscreen_list_menu.h"
+#include "unk_0200ACF0.h"
 #include "vram_transfer_manager.h"
 
 #define HEAPID_BASE_APP 3
@@ -42,13 +43,23 @@ typedef struct HackBoxTool
 	SpriteList *spriteList;
     G2dRenderer g2dRender;
 	GF_2DGfxResMan *gfxResMen[4];
-	SpriteResource *gfxResObjs[2][4];
+	SpriteResource *gfxResObjs[4];
+	NNSG2dRenderSurface surface;
 	Window titleWindow;
 	Window infoWindow;
 	Window mainButtonWindow[4];
 	String *textString;
 	TouchscreenListMenuSpawner *menuSpawner;
 	int needReloadFont[5];
+	int cursor;
+	SpriteResourcesHeader spriteHeader;
+	Sprite *cursorSprite;
+	void *charDataRaw;
+    NNSG2dCharacterData *charData;
+    void *monIconCharDaraRaw;
+    NNSG2dCharacterData *monIconCharData;
+    void *plttDataRaw;
+    NNSG2dPaletteData *plttData;
 } HackBoxTool;
 
 const GraphicsBanks graphicsBanks = {
@@ -116,12 +127,14 @@ static const BgTemplate sHackBoxBgTemplate[] =
 
 static void HackBoxTool_DrawScreen(HackBoxTool *hackBox);
 static void HackBox_VBlankCB(void *param);
-static void HackBoxTool_DrawSprite(HackBoxTool *hackBox);
+void HackBoxTool_DrawSprite(HackBoxTool *hackBox);
 static void HackBoxTool_DrawWindow(HackBoxTool *hackBox);
 static void HackBox_LoadString(u16 *stringPtr, String *outString);
 static void HackBox_Load4BPPScreen(HackBoxTool *hackBox, int fileIndex, u8 bgLayout, int size);
 static void HackBoxTool_DrawSelectButton(HackBoxTool *hackBox);
 static void HackBox_LoadFont(HackBoxTool *hackBox, int fontID, int newFiles);
+static void HackBoxTool_ChangeSelectButton(HackBoxTool *hackBox);
+static void HackBoxTool_ChangeCursor(HackBoxTool *hackBox);
 
 extern u16 gText_titleName[];
 extern u16 gText_InfoText[];
@@ -148,6 +161,8 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
 
     data = OverlayManager_CreateAndGetData(ovyMan, sizeof(HackBoxTool), HEAP_ID_HACK_BOX);
     memset(data, 0, sizeof(HackBoxTool));
+    data->fileHandle = NARC_New(85, HEAP_ID_HACK_BOX);
+    data->bgConfig = BgConfig_Alloc(HEAP_ID_HACK_BOX);
 
     HackBoxTool_DrawScreen(data);
 	HackBoxTool_DrawSprite(data);
@@ -155,7 +170,7 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
 	HackBoxTool_DrawSelectButton(data);
 
 	GfGfx_EngineATogglePlanes(GX_PLANEMASK_OBJ, TRUE);
-    Main_SetVBlankIntrCB(HackBox_VBlankCB, NULL);
+    Main_SetVBlankIntrCB(HackBox_VBlankCB, data);
 	HBlankInterruptDisable();
 
 	BeginNormalPaletteFade(0, 1, 1, RGB_BLACK, 16, 1, HEAP_ID_HACK_BOX);
@@ -164,9 +179,6 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
 
 static void HackBoxTool_DrawScreen(HackBoxTool *hackBox)
 {
-    hackBox->fileHandle = NARC_New(85, HEAP_ID_HACK_BOX);
-    hackBox->bgConfig = BgConfig_Alloc(HEAP_ID_HACK_BOX);
-
     GfGfx_SetBanks(&graphicsBanks);
     SetBothScreensModesAndDisable(&graphicsModes);
 
@@ -190,29 +202,70 @@ static void HackBoxTool_DrawScreen(HackBoxTool *hackBox)
 	// NARC_Delete(hackBox->fileHandle);
 }
 
-static void HackBoxTool_DrawSprite(HackBoxTool *hackBox)
+static NNSG2dViewRect DATA_ScrollSurfaceRect = 
+{
+	{ 0, 256 },
+	{ 255 << 12, 192 << 12}
+};
+
+void HackBoxTool_DrawSprite(HackBoxTool *hackBox)
 {
 	NNS_G2dInitOamManagerModule();
 	GF_CreateVramTransferManager(16, HEAP_ID_HACK_BOX);
 	OamManager_Create(0, 128, 0, 32, 0, 128, 0, 32, HEAP_ID_HACK_BOX);
 
 	ObjCharTransferTemplate tmplate = {
-        .maxTasks = 20,
+        .maxTasks = 64,
         .sizeMain = 0x800,
         .sizeSub = 0x800,
         .heapId = HEAP_ID_HACK_BOX,
     };
-    ObjCharTransfer_Init(&tmplate);
-	ObjPlttTransfer_Init(20, HEAP_ID_HACK_BOX);
+	ObjCharTransfer_InitEx(&tmplate, GX_OBJVRAMMODE_CHAR_1D_32K, GX_OBJVRAMMODE_CHAR_1D_32K);
+	ObjPlttTransfer_Init(32, HEAP_ID_HACK_BOX);
 	ObjCharTransfer_ClearBuffers();
     ObjPlttTransfer_Reset();
 
-	hackBox->spriteList = G2dRenderer_Init(44, &hackBox->g2dRender, HEAP_ID_HACK_BOX);
-	G2dRenderer_SetSubSurfaceCoords(&hackBox->g2dRender, 0, FX32_CONST(256));
+	hackBox->spriteList = G2dRenderer_Init(32, &hackBox->g2dRender, HEAP_ID_HACK_BOX);
+	sub_0200B27C(&hackBox->surface, &DATA_ScrollSurfaceRect, NNS_G2D_VRAM_TYPE_2DSUB, &hackBox->g2dRender.rendererInstance);
 
 	for (int i = 0; i < 4; ++i)
-        hackBox->gfxResMen[i] = Create2DGfxResObjMan(2, (GfGfxResType)i, HEAP_ID_HACK_BOX);
+        hackBox->gfxResMen[i] = Create2DGfxResObjMan(32, (GfGfxResType)i, HEAP_ID_HACK_BOX);
 
+	hackBox->gfxResObjs[0] = AddCharResObjFromOpenNarc(hackBox->gfxResMen[0], hackBox->fileHandle, 1, TRUE, 100, NNS_G2D_VRAM_TYPE_2DSUB, HEAP_ID_HACK_BOX);
+	hackBox->gfxResObjs[1] = AddPlttResObjFromOpenNarc(hackBox->gfxResMen[1], hackBox->fileHandle, 0, FALSE, 100, NNS_G2D_VRAM_TYPE_2DSUB, 5, HEAP_ID_HACK_BOX);
+	hackBox->gfxResObjs[2] = AddCellOrAnimResObjFromOpenNarc(hackBox->gfxResMen[2], hackBox->fileHandle, 2, TRUE, 100, GF_GFX_RES_TYPE_CELL, HEAP_ID_HACK_BOX);
+	hackBox->gfxResObjs[3] = AddCellOrAnimResObjFromOpenNarc(hackBox->gfxResMen[3], hackBox->fileHandle, 3, TRUE, 100, GF_GFX_RES_TYPE_ANIM, HEAP_ID_HACK_BOX);
+	// sub_0200ADA4(hackBox->gfxResObjs[0]);
+	// sub_0200B00C(hackBox->gfxResObjs[1]);
+	// sub_0200A740(hackBox->gfxResObjs[0]);
+	// sub_0200A740(hackBox->gfxResObjs[1]);
+	sub_0200ACF0(hackBox->gfxResObjs[0]);
+	sub_0200AF94(hackBox->gfxResObjs[1]);
+
+	CreateSpriteResourcesHeader(&hackBox->spriteHeader, 100, 100, 100, 100, -1, -1, FALSE, 0, 
+		hackBox->gfxResMen[0], hackBox->gfxResMen[1], hackBox->gfxResMen[2], hackBox->gfxResMen[3], NULL, NULL);
+
+	SpriteTemplate spriteTemplate;
+	spriteTemplate.spriteList = hackBox->spriteList;
+	spriteTemplate.header = &hackBox->spriteHeader;
+	spriteTemplate.position.x = 0;
+	spriteTemplate.position.y = 0;
+	spriteTemplate.position.z = 0;
+	spriteTemplate.scale.x = FX32_ONE;
+	spriteTemplate.scale.y = FX32_ONE;
+	spriteTemplate.scale.z = FX32_ONE;
+	spriteTemplate.rotation = 0;
+	spriteTemplate.priority = 1;
+	spriteTemplate.whichScreen = NNS_G2D_VRAM_TYPE_2DSUB;
+	spriteTemplate.heapId = HEAP_ID_HACK_BOX;
+	
+	hackBox->cursorSprite = Sprite_CreateAffine(&spriteTemplate);
+
+	Sprite_SetDrawFlag(hackBox->cursorSprite, TRUE);
+	Sprite_SetAnimCtrlSeq(hackBox->cursorSprite, 0);
+
+	GfGfx_EngineATogglePlanes(GX_PLANEMASK_OBJ, GF_PLANE_TOGGLE_ON);
+    GfGfx_EngineBTogglePlanes(GX_PLANEMASK_OBJ, GF_PLANE_TOGGLE_ON);
 }
 
 static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
@@ -222,9 +275,9 @@ static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
 	HackBox_LoadFont(hackBox, 4, 10);
 	HackBox_LoadFont(hackBox, 0, 11);
 
-    LoadFontPal1(GF_PAL_LOCATION_MAIN_BG, (enum GFPalSlotOffset)0x180, HEAP_ID_HACK_BOX);
     LoadUserFrameGfx2(hackBox->bgConfig, GF_BG_LYR_SUB_0, 0x100, 10, 0, HEAP_ID_HACK_BOX);
-    LoadFontPal1(GF_PAL_LOCATION_SUB_BG, (enum GFPalSlotOffset)0x180, HEAP_ID_HACK_BOX);
+    LoadFontPal1(GF_PAL_LOCATION_MAIN_BG, 11 * 32, HEAP_ID_HACK_BOX);
+    LoadFontPal1(GF_PAL_LOCATION_SUB_BG, 11 * 32, HEAP_ID_HACK_BOX);
 
 	hackBox->menuSpawner = TouchscreenListMenuSpawner_Create(HEAP_ID_HACK_BOX, 0);
 	// 标题部分
@@ -234,7 +287,7 @@ static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
 	HackBox_LoadString(gText_titleName, hackBox->textString);
 
 	FillWindowPixelBuffer(&hackBox->titleWindow, 0);
-    AddTextPrinterParameterizedWithColor(&hackBox->titleWindow, 0, hackBox->textString, 2, 7, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 2, 0), NULL);
+    AddTextPrinterParameterizedWithColor(&hackBox->titleWindow, 0, hackBox->textString, 2, 7, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(11, 2, 0), NULL);
     CopyWindowToVram(&hackBox->titleWindow);
 
 	// 介绍部分
@@ -259,14 +312,38 @@ static void HackBoxTool_DrawSelectButton(HackBoxTool *hackBox)
 		AddTextPrinterParameterizedWithColor(&hackBox->mainButtonWindow[i], 4, hackBox->textString, 2 + (96 - stringWidth) / 2, 0, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 15, 0), NULL);
 		CopyWindowToVram(&hackBox->mainButtonWindow[i]);
 	}
+	// HackBoxTool_ChangeSelectButton(hackBox);
+}
+
+static void HackBoxTool_ChangeSelectButton(HackBoxTool *hackBox)
+{
+	int i;
+	u8 pal;
+
+	for (i = 0; i < 4; i++)
+	{
+		if (hackBox->cursor == i)
+			pal = 9;
+		else
+			pal = 2;
+
+		BgTilemapRectChangePalette(hackBox->bgConfig, GF_BG_LYR_SUB_2, 2, 2 + 5 * i, 28, 4, pal);
+	}
+	ScheduleBgTilemapBufferTransfer(hackBox->bgConfig, GF_BG_LYR_SUB_2);
+}
+
+static void HackBoxTool_ChangeCursor(HackBoxTool *hackBox)
+{
+	Sprite_SetPositionXY(hackBox->cursorSprite, 128, 40 * hackBox->cursor + 32);
 }
 
 static void HackBox_VBlankCB(void *param)
 {
 	HackBoxTool *hackBox = param;
-	DoScheduledBgGpuUpdates(hackBox->bgConfig);
     GF_RunVramTransferTasks();
+	DoScheduledBgGpuUpdates(hackBox->bgConfig);
     OamManager_ApplyAndResetBuffers();
+    OS_SetIrqCheckFlag(OS_IE_V_BLANK);
 }
 
 // 功能性函数
@@ -301,18 +378,23 @@ static void HackBox_LoadFont(HackBoxTool *hackBox, int fontID, int newFiles)
 	// 重新加载字体图片
 	// 默认ROM使用的xzonn的码表，为了保证acg汉化版本能显示正确的字，这里把字体读取成xzonn版本的
 	// 如果字体正在被共用，程序结束后需要重新加载原字库
+	// 注意：新增的字体文件日版和美版不同
 	if (sFontWork->fontDataRefCount[fontID] > 0)
 	{
 		FontData_Delete(sFontWork->fontDataMan[fontID]);
 		hackBox->needReloadFont[fontID] = TRUE;
 	}
-	// 日版为11
+
 	sFontWork->fontDataMan[fontID] = FontData_New(NARC_graphic_font, newFiles, FONTARC_MODE_LAZY, FALSE, HEAP_ID_HACK_BOX);
 	sFontWork->fontDataRefCount[fontID]++;
 }
 
 BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
 {
+	HackBoxTool *hackBox = OverlayManager_GetData(ovyMan);
+	// Sprite_SetPositionXY(hackBox->cursorSprite, 128, 40 * hackBox->cursor);
+	SpriteList_RenderAndAnimateSprites(hackBox->spriteList);
+	HackBoxTool_ChangeCursor(hackBox);
     return FALSE;
 }
 
