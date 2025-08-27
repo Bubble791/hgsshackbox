@@ -21,3 +21,7 @@ gText_MoreEdit:
 .align 4
 gText_ExitBox:
     .string "退出$"
+
+.align 4
+gText_PokemonEdit_Species:
+    .string "编号$"

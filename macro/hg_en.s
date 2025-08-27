@@ -91,3 +91,12 @@
 .definearmlabel GX_LoadOBJ, 0x020CFE74
 .definethumblabel GetMonIconPaletteEx, 0x02074364
 .definearmlabel GX_LoadOBJPltt, 0x020CFD18
+.definethumblabel IsPaletteFadeFinished, 0x0200FB5C
+.definethumblabel TouchscreenHitbox_FindHitboxAtTouchNew, 0x0202529C
+.definethumblabel PlaySE, 0x0200604C
+.definethumblabel LoadUserFrameGfx1, 0x0200E3DC
+.definethumblabel DrawFrameAndWindow1, 0x0200E580
+.definethumblabel AllocFromHeap, 0x0201AA8C
+.definethumblabel ListMenuCursorNew, 0x02015788
+.definethumblabel CopyWindowPixelsToVram_TextMode, 0x0201D8A0
+.definethumblabel String_Delete, 0x02026380

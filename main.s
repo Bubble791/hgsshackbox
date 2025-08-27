@@ -8,6 +8,7 @@
 
 .area 0x5300
 .importobj "build/hackBox.o"
+.importobj "build/hackBox_Pokemon.o"
 
 .include "macro/thumb_help.s"
 .include "macro/text.s"

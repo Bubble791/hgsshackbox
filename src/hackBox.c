@@ -29,38 +29,9 @@
 #include "unk_02013534.h"
 #include "touchscreen_list_menu.h"
 #include "unk_0200ACF0.h"
+#include "unk_02005D10.h"
 #include "vram_transfer_manager.h"
-
-#define HEAPID_BASE_APP 3
-#define HEAP_ID_HACK_BOX 51
-
-typedef struct HackBoxTool
-{
-    BgConfig *bgConfig;
-    NARC *fileHandle;
-    MessageFormat *msgFormat;
-	MsgData *msgData;
-	SpriteList *spriteList;
-    G2dRenderer g2dRender;
-	GF_2DGfxResMan *gfxResMen[4];
-	SpriteResource *gfxResObjs[4];
-	NNSG2dRenderSurface surface;
-	Window titleWindow;
-	Window infoWindow;
-	Window mainButtonWindow[4];
-	String *textString;
-	TouchscreenListMenuSpawner *menuSpawner;
-	int needReloadFont[5];
-	int cursor;
-	SpriteResourcesHeader spriteHeader;
-	Sprite *cursorSprite;
-	void *charDataRaw;
-    NNSG2dCharacterData *charData;
-    void *monIconCharDaraRaw;
-    NNSG2dCharacterData *monIconCharData;
-    void *plttDataRaw;
-    NNSG2dPaletteData *plttData;
-} HackBoxTool;
+#include "hackbox.h"
 
 const GraphicsBanks graphicsBanks = {
 	GX_VRAM_BG_256_AB,
@@ -123,13 +94,19 @@ static const BgTemplate sHackBoxBgTemplate[] =
 		GX_BG_SCRBASE_0xe800, GX_BG_CHARBASE_0x00000, GX_BG_EXTPLTT_01,
 		3, 0, 0, FALSE
 	},
+	{	// UFRM_BACK
+		0, 0, 0x800, 0, GF_BG_SCR_SIZE_256x256, GX_BG_COLORMODE_16,
+		GX_BG_SCRBASE_0xc800, GX_BG_CHARBASE_0x10000, GX_BG_EXTPLTT_01,
+		2, 0, 0, FALSE
+	},
 };
+
+#include "touchData.h"
 
 static void HackBoxTool_DrawScreen(HackBoxTool *hackBox);
 static void HackBox_VBlankCB(void *param);
 void HackBoxTool_DrawSprite(HackBoxTool *hackBox);
 static void HackBoxTool_DrawWindow(HackBoxTool *hackBox);
-static void HackBox_LoadString(u16 *stringPtr, String *outString);
 static void HackBox_Load4BPPScreen(HackBoxTool *hackBox, int fileIndex, u8 bgLayout, int size);
 static void HackBoxTool_DrawSelectButton(HackBoxTool *hackBox);
 static void HackBox_LoadFont(HackBoxTool *hackBox, int fontID, int newFiles);
@@ -163,6 +140,9 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
     memset(data, 0, sizeof(HackBoxTool));
     data->fileHandle = NARC_New(85, HEAP_ID_HACK_BOX);
     data->bgConfig = BgConfig_Alloc(HEAP_ID_HACK_BOX);
+
+	data->hackBoxPoke = AllocFromHeap(HEAP_ID_HACK_BOX, sizeof(HackBoxToolPokemon));
+	MI_CpuFill8(data->hackBoxPoke, 0, sizeof(HackBoxToolPokemon));
 
     HackBoxTool_DrawScreen(data);
 	HackBoxTool_DrawSprite(data);
@@ -275,6 +255,7 @@ static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
 	HackBox_LoadFont(hackBox, 4, 10);
 	HackBox_LoadFont(hackBox, 0, 11);
 
+	LoadUserFrameGfx1(hackBox->bgConfig, GF_BG_LYR_SUB_3, 1, 15, 0, HEAP_ID_HACK_BOX);
     LoadUserFrameGfx2(hackBox->bgConfig, GF_BG_LYR_SUB_0, 0x100, 10, 0, HEAP_ID_HACK_BOX);
     LoadFontPal1(GF_PAL_LOCATION_MAIN_BG, 11 * 32, HEAP_ID_HACK_BOX);
     LoadFontPal1(GF_PAL_LOCATION_SUB_BG, 11 * 32, HEAP_ID_HACK_BOX);
@@ -301,7 +282,7 @@ static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
 
 static void HackBoxTool_DrawSelectButton(HackBoxTool *hackBox)
 {
-	u16 startTiles = 20 + 24 + 240;
+	u16 startTiles = 20;
 	for (int i = 0; i < NELEMS(hackBox->mainButtonWindow); i++)
 	{
 		InitWindow(&hackBox->mainButtonWindow[i]);
@@ -346,8 +327,86 @@ static void HackBox_VBlankCB(void *param)
     OS_SetIrqCheckFlag(OS_IE_V_BLANK);
 }
 
+static void HackBoxTool_HandleMainPage(HackBoxTool *hackBox)
+{
+	// 触摸效果
+	int ret = TouchscreenHitbox_FindHitboxAtTouchNew(sModeSelectTouch);
+
+	// 无触屏效果，检查按键
+	if (ret == -1)
+	{
+		if ((gSystem.newKeys & PAD_KEY_UP) && hackBox->cursor > 0)
+		{
+			hackBox->cursor--;
+			PlaySE(0x5DD);
+		}
+		else if (gSystem.newKeys & PAD_KEY_DOWN)
+		{
+			hackBox->cursor++;
+			hackBox->cursor %= 4;
+			PlaySE(0x5DD);
+		}
+		else if (gSystem.newKeys & PAD_BUTTON_A)
+		{
+			hackBox->pageMode = hackBox->cursor + 1;
+			PlaySE(0x5DD);
+			HackBoxTool_ChangeSelectButton(hackBox);
+		}
+		return;
+	}
+	else
+	{
+		hackBox->cursor = ret;
+		hackBox->pageMode = ret + 1;
+		PlaySE(0x5DD);
+		HackBoxTool_ChangeSelectButton(hackBox);
+	}
+}
+
+BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
+{
+	u8 nowPage;
+	HackBoxTool *hackBox = OverlayManager_GetData(ovyMan);
+
+	switch (*pState)
+	{
+		case 0:
+			if (IsPaletteFadeFinished())
+				*pState = 1;
+			break;
+		case 1:
+			nowPage = hackBox->pageMode;
+			switch (hackBox->pageMode)
+			{
+				case HACKBOX_PAGE_MAIN:
+					HackBoxTool_HandleMainPage(hackBox);
+					break;
+			}
+			if (nowPage != hackBox->pageMode)
+				*pState = 2;
+			break;
+		case 2:
+			switch (hackBox->pageMode)
+			{
+				case HACKBOX_PAGE_POKEMON:
+					HackBoxTool_PokemonPageUI(hackBox);
+					break;
+			}
+			*pState = 1;
+			break;
+	}
+	SpriteList_RenderAndAnimateSprites(hackBox->spriteList);
+	HackBoxTool_ChangeCursor(hackBox);
+    return FALSE;
+}
+
+BOOL HackBoxTool_Exit(OverlayManager *ovyMan, int *pState)
+{
+    return TRUE;
+}
+
 // 功能性函数
-static void HackBox_LoadString(u16 *stringPtr, String *outString)
+void HackBox_LoadString(u16 *stringPtr, String *outString)
 {
 	int index;
 
@@ -387,18 +446,4 @@ static void HackBox_LoadFont(HackBoxTool *hackBox, int fontID, int newFiles)
 
 	sFontWork->fontDataMan[fontID] = FontData_New(NARC_graphic_font, newFiles, FONTARC_MODE_LAZY, FALSE, HEAP_ID_HACK_BOX);
 	sFontWork->fontDataRefCount[fontID]++;
-}
-
-BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
-{
-	HackBoxTool *hackBox = OverlayManager_GetData(ovyMan);
-	// Sprite_SetPositionXY(hackBox->cursorSprite, 128, 40 * hackBox->cursor);
-	SpriteList_RenderAndAnimateSprites(hackBox->spriteList);
-	HackBoxTool_ChangeCursor(hackBox);
-    return FALSE;
-}
-
-BOOL HackBoxTool_Exit(OverlayManager *ovyMan, int *pState)
-{
-    return TRUE;
 }
