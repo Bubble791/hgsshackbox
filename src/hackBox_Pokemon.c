@@ -65,28 +65,42 @@ static u16* sPokeEditText[] =
 
 static void HackBoxTool_PokePagePut(HackBoxTool *hackBox);
 static u8 HackBoxTool_PokePutParam(HackBoxTool *wk, u8 id, u32 pal, u8 y);
+static void HackBoxTool_LoadPokeIcon(HackBoxTool *hackBox);
 
-void HackBoxTool_PokemonPageUI(HackBoxTool *hackBox)
+BOOL HackBoxTool_PokemonPageUI(HackBoxTool *hackBox)
 {
     HackBoxToolPokemon *hackBoxPoke = hackBox->hackBoxPoke;
 
-    hackBoxPoke->listCursor = ListMenuCursorNew(HEAP_ID_HACK_BOX);
-    InitWindow(&hackBoxPoke->pokemonEditWindow);
-	AddWindowParameterized(hackBox->bgConfig, &hackBoxPoke->pokemonEditWindow, GF_BG_LYR_SUB_3, 2, 7, 28, 15, 15, 340);
-    AddWindowParameterized(hackBox->bgConfig, &hackBoxPoke->partyIconWindow, GF_BG_LYR_SUB_3, 2, 1, 28, 4, 15, 340 + 28 * 15);
+    switch (hackBoxPoke->seq)
+    {
+        case 0:
+            hackBoxPoke->listCursor = ListMenuCursorNew(HEAP_ID_HACK_BOX);
+            InitWindow(&hackBoxPoke->pokemonEditWindow);
+            AddWindowParameterized(hackBox->bgConfig, &hackBoxPoke->pokemonEditWindow, GF_BG_LYR_SUB_3, 2, 7, 28, 15, 15, 340);
+            AddWindowParameterized(hackBox->bgConfig, &hackBoxPoke->partyIconWindow, GF_BG_LYR_SUB_3, 2, 1, 28, 4, 15, 340 + 28 * 15);
+            break;
+        case 1:
+            Sprite_SetDrawFlag(hackBox->cursorSprite, FALSE);
+	        GfGfx_EngineBTogglePlanes(GX_PLANEMASK_BG0, GF_PLANE_TOGGLE_OFF);
+            break;
+        case 2:
+            DrawFrameAndWindow1(&hackBoxPoke->pokemonEditWindow, FALSE, 1, 15);
+            FillWindowPixelBuffer(&hackBoxPoke->pokemonEditWindow, 0x11);
+            CopyWindowToVram(&hackBoxPoke->pokemonEditWindow);
 
-	DrawFrameAndWindow1(&hackBoxPoke->pokemonEditWindow, FALSE, 1, 15);
-	FillWindowPixelBuffer(&hackBoxPoke->pokemonEditWindow, 0x11);
-	CopyWindowToVram(&hackBoxPoke->pokemonEditWindow);
-
-    DrawFrameAndWindow1(&hackBoxPoke->partyIconWindow, FALSE, 1, 15);
-	FillWindowPixelBuffer(&hackBoxPoke->partyIconWindow, 0x11);
-	CopyWindowToVram(&hackBoxPoke->partyIconWindow);
-
-	Sprite_SetDrawFlag(hackBox->cursorSprite, FALSE);
-	GfGfx_EngineBTogglePlanes(GX_PLANEMASK_BG0, GF_PLANE_TOGGLE_OFF);
-
-    HackBoxTool_PokePagePut(hackBox);
+            DrawFrameAndWindow1(&hackBoxPoke->partyIconWindow, FALSE, 1, 15);
+            FillWindowPixelBuffer(&hackBoxPoke->partyIconWindow, 0x11);
+            CopyWindowToVram(&hackBoxPoke->partyIconWindow);
+            break;
+        case 3:
+            HackBoxTool_PokePagePut(hackBox);
+            break;
+        case 4:
+            HackBoxTool_LoadPokeIcon(hackBox);
+            return TRUE;
+    }
+    hackBoxPoke->seq++;
+    return FALSE;
 }
 
 static void HackBoxTool_PokePagePut(HackBoxTool *hackBox)
@@ -140,6 +154,11 @@ static void PokeMake_PrintString(HackBoxTool *hackBox, Window *win, u16 id, u32 
     AddTextPrinterParameterizedWithColor(win, 0, hackBox->textString, x, y, 0xFF, color, NULL);
 }
 
+static void PokeMake_PrintNum(HackBoxTool *hackBox, Window *win, u16 id, u32 x, u32 y, u32 color)
+{
+    String *newString = String_New(32, HEAP_ID_HACK_BOX);
+}
+
 static u8 HackBoxTool_PokePutParam(HackBoxTool *hackBox, u8 id, u32 pal, u8 y)
 {
     HackBoxToolPokemon *hackBoxPoke = hackBox->hackBoxPoke;
@@ -148,4 +167,16 @@ static u8 HackBoxTool_PokePutParam(HackBoxTool *hackBox, u8 id, u32 pal, u8 y)
     {
         PokeMake_PrintString(hackBox, &hackBoxPoke->pokemonEditWindow, id, 12, y, COLOR_W_BLACK);
     }
+}
+
+static void HackBoxTool_LoadPokeIcon(HackBoxTool *hackBox)
+{
+    Pokemon *mon = Party_GetMonByIndex(hackBox->partySaveData, 0);
+    u16 species = GetMonData(mon, MON_DATA_SPECIES, NULL);
+    int isEgg = GetMonData(mon, MON_DATA_IS_EGG, NULL);
+    int form = GetMonData(mon, MON_DATA_FORM, NULL);
+    int icon = Pokemon_GetIconNaix(mon);
+    int pal = GetMonIconPaletteEx(species, form, isEgg);
+
+    // CATS_ChangeResourceCharArcH 修改图标图块
 }

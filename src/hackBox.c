@@ -143,6 +143,8 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
 
 	data->hackBoxPoke = AllocFromHeap(HEAP_ID_HACK_BOX, sizeof(HackBoxToolPokemon));
 	MI_CpuFill8(data->hackBoxPoke, 0, sizeof(HackBoxToolPokemon));
+	data->procParam = OverlayManager_GetArgs(ovyMan);
+	data->partySaveData = SaveArray_Party_Get(data->procParam->saveData);
 
     HackBoxTool_DrawScreen(data);
 	HackBoxTool_DrawSprite(data);
@@ -205,27 +207,27 @@ void HackBoxTool_DrawSprite(HackBoxTool *hackBox)
 	ObjCharTransfer_ClearBuffers();
     ObjPlttTransfer_Reset();
 
-	hackBox->spriteList = G2dRenderer_Init(32, &hackBox->g2dRender, HEAP_ID_HACK_BOX);
+	hackBox->spriteList = G2dRenderer_Init(64, &hackBox->g2dRender, HEAP_ID_HACK_BOX);
 	sub_0200B27C(&hackBox->surface, &DATA_ScrollSurfaceRect, NNS_G2D_VRAM_TYPE_2DSUB, &hackBox->g2dRender.rendererInstance);
 
 	for (int i = 0; i < 4; ++i)
-        hackBox->gfxResMen[i] = Create2DGfxResObjMan(32, (GfGfxResType)i, HEAP_ID_HACK_BOX);
+        hackBox->gfxResMen[i] = Create2DGfxResObjMan(64, (GfGfxResType)i, HEAP_ID_HACK_BOX);
 
 	hackBox->gfxResObjs[0] = AddCharResObjFromOpenNarc(hackBox->gfxResMen[0], hackBox->fileHandle, 1, TRUE, 100, NNS_G2D_VRAM_TYPE_2DSUB, HEAP_ID_HACK_BOX);
 	hackBox->gfxResObjs[1] = AddPlttResObjFromOpenNarc(hackBox->gfxResMen[1], hackBox->fileHandle, 0, FALSE, 100, NNS_G2D_VRAM_TYPE_2DSUB, 5, HEAP_ID_HACK_BOX);
 	hackBox->gfxResObjs[2] = AddCellOrAnimResObjFromOpenNarc(hackBox->gfxResMen[2], hackBox->fileHandle, 2, TRUE, 100, GF_GFX_RES_TYPE_CELL, HEAP_ID_HACK_BOX);
 	hackBox->gfxResObjs[3] = AddCellOrAnimResObjFromOpenNarc(hackBox->gfxResMen[3], hackBox->fileHandle, 3, TRUE, 100, GF_GFX_RES_TYPE_ANIM, HEAP_ID_HACK_BOX);
-	// sub_0200ADA4(hackBox->gfxResObjs[0]);
-	// sub_0200B00C(hackBox->gfxResObjs[1]);
-	// sub_0200A740(hackBox->gfxResObjs[0]);
-	// sub_0200A740(hackBox->gfxResObjs[1]);
+
 	sub_0200ACF0(hackBox->gfxResObjs[0]);
 	sub_0200AF94(hackBox->gfxResObjs[1]);
+
+	// 宝可梦小图标色板，cell加载
+
+	SpriteTemplate spriteTemplate;
 
 	CreateSpriteResourcesHeader(&hackBox->spriteHeader, 100, 100, 100, 100, -1, -1, FALSE, 0, 
 		hackBox->gfxResMen[0], hackBox->gfxResMen[1], hackBox->gfxResMen[2], hackBox->gfxResMen[3], NULL, NULL);
 
-	SpriteTemplate spriteTemplate;
 	spriteTemplate.spriteList = hackBox->spriteList;
 	spriteTemplate.header = &hackBox->spriteHeader;
 	spriteTemplate.position.x = 0;
@@ -366,6 +368,7 @@ static void HackBoxTool_HandleMainPage(HackBoxTool *hackBox)
 BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
 {
 	u8 nowPage;
+	u8 uiRet = FALSE;
 	HackBoxTool *hackBox = OverlayManager_GetData(ovyMan);
 
 	switch (*pState)
@@ -389,10 +392,11 @@ BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
 			switch (hackBox->pageMode)
 			{
 				case HACKBOX_PAGE_POKEMON:
-					HackBoxTool_PokemonPageUI(hackBox);
+					uiRet = HackBoxTool_PokemonPageUI(hackBox);
 					break;
 			}
-			*pState = 1;
+			if (uiRet)
+				*pState = 1;
 			break;
 	}
 	SpriteList_RenderAndAnimateSprites(hackBox->spriteList);

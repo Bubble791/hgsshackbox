@@ -11,10 +11,16 @@ enum
 	HACKBOX_PAGE_MORE,
 };
 
+typedef struct
+{
+	SaveData *saveData;
+} WIFINOTE_PROC_PARAM;
+
 typedef struct HackBoxToolPokemon
 {
     u8 selectRow;
 	u8 pageNow;
+	u8 seq;
 	Window pokemonEditWindow;
 	Window partyIconWindow;
 	struct ListMenuCursor *listCursor;
@@ -22,6 +28,8 @@ typedef struct HackBoxToolPokemon
 
 typedef struct HackBoxTool
 {
+	WIFINOTE_PROC_PARAM *procParam;
+	Party *partySaveData;
     BgConfig *bgConfig;
     NARC *fileHandle;
     MessageFormat *msgFormat;
@@ -30,6 +38,7 @@ typedef struct HackBoxTool
     G2dRenderer g2dRender;
 	GF_2DGfxResMan *gfxResMen[4];
 	SpriteResource *gfxResObjs[4];
+	SpriteResource *iconResObjs[4];
 	NNSG2dRenderSurface surface;
 	Window titleWindow;
 	Window infoWindow;
@@ -39,11 +48,12 @@ typedef struct HackBoxTool
 	int needReloadFont[5];
 	int cursor;
 	SpriteResourcesHeader spriteHeader;
+	SpriteResourcesHeader iconSpriteHeader;
 	Sprite *cursorSprite;
 	int pageMode;
 	// pokemon
 	HackBoxToolPokemon *hackBoxPoke;
 } HackBoxTool;
 
-void HackBoxTool_PokemonPageUI(HackBoxTool *hackBox);
+BOOL HackBoxTool_PokemonPageUI(HackBoxTool *hackBox);
 void HackBox_LoadString(u16 *stringPtr, String *outString);

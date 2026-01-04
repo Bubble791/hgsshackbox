@@ -100,3 +100,10 @@
 .definethumblabel ListMenuCursorNew, 0x02015788
 .definethumblabel CopyWindowPixelsToVram_TextMode, 0x0201D8A0
 .definethumblabel String_Delete, 0x02026380
+.definethumblabel sub_02074498, 0x02074498
+.definethumblabel sub_020744A4, 0x020744A4
+.definethumblabel OverlayManager_GetArgs, 0x020072A4
+.definethumblabel SaveArray_Party_Get, 0x02074904
+.definethumblabel Party_GetMonByIndex, 0x02074644
+.definethumblabel GetMonData, 0x0206E540
+.definethumblabel Pokemon_GetIconNaix, 0x020741B0
