@@ -69,4 +69,4 @@
 #define PMAKE_BATTLEPARAM1	( 0xfe )
 #define PMAKE_BATTLEPARAM2	( 0xfd )
 
-void DebugPokemonMakeInit(HackBoxTool *hackBox);
+void DebugPokemonMakeInit(HackBoxTool *hackBox, u8 mode);

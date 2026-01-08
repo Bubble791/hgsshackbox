@@ -48,6 +48,18 @@ SysTask *PMDS_taskAdd(SysTaskFunc func, int work_size, u32 pri, const u32 heap_i
     return SysTask_CreateOnMainQueue(func, work_memory, pri);
 }
 
+void PMDS_taskDel(SysTask *tcb)
+{
+    void *work_memory;
+
+    work_memory = SysTask_GetData(tcb);
+    if (work_memory != NULL)
+    {
+        Heap_Free(work_memory);
+    }
+    SysTask_Destroy(tcb);
+}
+
 // 功能性函数
 void HackBox_LoadString(u16 *stringPtr, String *outString)
 {
@@ -70,11 +82,39 @@ extern u16 gText_msg_pmlabel_03[];
 extern u16 gText_msg_pmlabel_04[];
 extern u16 gText_msg_pmlabel_05[];
 extern u16 gText_msg_pmlabel_06[];
-extern u16 gText_msg_pminfo_02[];
+extern u16 gText_msg_pmlabel_07[];
+extern u16 gText_msg_pmlabel_08[];
+extern u16 gText_msg_pmlabel_09[];
+extern u16 gText_msg_pmlabel_10[];
+extern u16 gText_msg_pmlabel_11[];
+extern u16 gText_msg_pmlabel_12[];
+extern u16 gText_msg_pmlabel_13[];
+extern u16 gText_msg_pmlabel_14[];
+extern u16 gText_msg_pmlabel_15[];
+extern u16 gText_msg_pmlabel_16[];
+extern u16 gText_msg_pmlabel_17[];
+extern u16 gText_msg_pmlabel_18[];
+extern u16 gText_msg_pmlabel_19[];
+extern u16 gText_msg_pmlabel_20[];
+extern u16 gText_msg_pmlabel_21[];
+extern u16 gText_msg_pmlabel_22[];
+extern u16 gText_msg_pmlabel_23[];
+extern u16 gText_msg_pmlabel_24[];
 
+extern u16 gText_msg_pmlabel_35[];
+extern u16 gText_msg_pmlabel_36[];
+extern u16 gText_msg_pmlabel_37[];
+extern u16 gText_msg_pmlabel_38[];
+extern u16 gText_msg_pmlabel_39[];
+extern u16 gText_msg_pmlabel_40[];
+
+extern u16 gText_msg_pminfo_02[];
 extern u16 gText_msg_pmstr_00[];
 extern u16 gText_msg_pmstr_01[];
 extern u16 gText_msg_pmstr_02[];
+extern u16 gText_msg_pmstr_08[];
+extern u16 gText_msg_pmstr_09[];
+extern u16 gText_msg_pmstr_10[];
 extern u16 gText_msg_pmstr_11[];
 
 static const u16 *sGlobalString[] = 
@@ -82,6 +122,9 @@ static const u16 *sGlobalString[] =
     [msg_pmstr_00] = gText_msg_pmstr_00,
     [msg_pmstr_01] = gText_msg_pmstr_01,
     [msg_pmstr_02] = gText_msg_pmstr_02,
+    [msg_pmstr_08] = gText_msg_pmstr_08,
+    [msg_pmstr_09] = gText_msg_pmstr_09,
+    [msg_pmstr_10] = gText_msg_pmstr_10,
     [msg_pmstr_11] = gText_msg_pmstr_11,
 
     [msg_pmlabel_00] = gText_msg_pmlabel_00,
@@ -91,6 +134,32 @@ static const u16 *sGlobalString[] =
     [msg_pmlabel_04] = gText_msg_pmlabel_04,
     [msg_pmlabel_05] = gText_msg_pmlabel_05,
     [msg_pmlabel_06] = gText_msg_pmlabel_06,
+    [msg_pmlabel_07] = gText_msg_pmlabel_07,
+    [msg_pmlabel_08] = gText_msg_pmlabel_08,
+    [msg_pmlabel_09] = gText_msg_pmlabel_09,
+    [msg_pmlabel_10] = gText_msg_pmlabel_10,
+    [msg_pmlabel_11] = gText_msg_pmlabel_11,
+    [msg_pmlabel_12] = gText_msg_pmlabel_12,
+    [msg_pmlabel_13] = gText_msg_pmlabel_13,
+    [msg_pmlabel_14] = gText_msg_pmlabel_14,
+    [msg_pmlabel_15] = gText_msg_pmlabel_15,
+    [msg_pmlabel_16] = gText_msg_pmlabel_16,
+    [msg_pmlabel_17] = gText_msg_pmlabel_17,
+    [msg_pmlabel_18] = gText_msg_pmlabel_18,
+    [msg_pmlabel_19] = gText_msg_pmlabel_19,
+    [msg_pmlabel_20] = gText_msg_pmlabel_20,
+    [msg_pmlabel_21] = gText_msg_pmlabel_21,
+    [msg_pmlabel_22] = gText_msg_pmlabel_22,
+    [msg_pmlabel_23] = gText_msg_pmlabel_23,
+    [msg_pmlabel_24] = gText_msg_pmlabel_24,
+
+    [msg_pmlabel_35] = gText_msg_pmlabel_35,
+    [msg_pmlabel_36] = gText_msg_pmlabel_36,
+    [msg_pmlabel_37] = gText_msg_pmlabel_37,
+    [msg_pmlabel_38] = gText_msg_pmlabel_38,
+    [msg_pmlabel_39] = gText_msg_pmlabel_39,
+    [msg_pmlabel_40] = gText_msg_pmlabel_40,
+
     [msg_pminfo_02] = gText_msg_pminfo_02,
 };
 

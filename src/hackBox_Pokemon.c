@@ -74,6 +74,7 @@ typedef struct
     Window win;
     Window win_title;
     SaveData *saveData;
+    HackBoxTool *hackBoxTool;
     MessageFormat *wset;
     struct ListMenuCursor *cursor;
     PokeMakeWork pmw;
@@ -88,6 +89,24 @@ static const PmakeCont cont03 = {0, 0xffffffff, PMC_INCDEC, 10};
 static const PmakeCont cont04 = {0, 0xffffffff, PMC_INCDEC, 10};
 static const PmakeCont cont05 = {0, 2, PMC_INCDEC, 0xff};
 static const PmakeCont cont06 = {0, 24, PMC_INCDEC, 0xff};
+static const PmakeCont cont07 = {0, MOVENO_MAX, PMC_INCDEC, 3};
+static const PmakeCont cont08 = {0, MOVENO_MAX, PMC_INCDEC, 3};
+static const PmakeCont cont09 = {0, MOVENO_MAX, PMC_INCDEC, 3};
+static const PmakeCont cont10 = {0, MOVENO_MAX, PMC_INCDEC, 3};
+static const PmakeCont cont11 = {0, ITEM_DATA_MAX, PMC_INCDEC, 3};
+static const PmakeCont cont12 = {0, 2, PMC_INCDEC, 0xffff};
+static const PmakeCont cont13 = {0, 31, PMC_INCDEC, 2};
+static const PmakeCont cont14 = {0, 255, PMC_INCDEC, 3};
+static const PmakeCont cont15 = {0, 31, PMC_INCDEC, 2};
+static const PmakeCont cont16 = {0, 255, PMC_INCDEC, 3};
+static const PmakeCont cont17 = {0, 31, PMC_INCDEC, 2};
+static const PmakeCont cont18 = {0, 255, PMC_INCDEC, 3};
+static const PmakeCont cont19 = {0, 31, PMC_INCDEC, 2};
+static const PmakeCont cont20 = {0, 255, PMC_INCDEC, 3};
+static const PmakeCont cont21 = {0, 31, PMC_INCDEC, 2};
+static const PmakeCont cont22 = {0, 255, PMC_INCDEC, 3};
+static const PmakeCont cont23 = {0, 31, PMC_INCDEC, 2};
+static const PmakeCont cont24 = {0, 255, PMC_INCDEC, 3};
 
 static const PmakeParamData PMakelabelTable[] =
 {
@@ -98,15 +117,29 @@ static const PmakeParamData PMakelabelTable[] =
     {msg_pmlabel_04, &cont04},
     {msg_pmlabel_05, &cont05},
     {msg_pmlabel_06, &cont06},
+    {msg_pmlabel_07, &cont07},
+    {msg_pmlabel_08, &cont08},
+    {msg_pmlabel_09, &cont09},
+    {msg_pmlabel_10, &cont10},
+    {msg_pmlabel_11, &cont11},
+    {msg_pmlabel_12, &cont12},
+    {msg_pmlabel_13, &cont13},
+    {msg_pmlabel_14, &cont14},
+    {msg_pmlabel_15, &cont15},
+    {msg_pmlabel_16, &cont16},
+    {msg_pmlabel_17, &cont17},
+    {msg_pmlabel_18, &cont18},
+    {msg_pmlabel_19, &cont19},
+    {msg_pmlabel_20, &cont20},
+    {msg_pmlabel_21, &cont21},
+    {msg_pmlabel_22, &cont22},
+    {msg_pmlabel_23, &cont23},
+    {msg_pmlabel_24, &cont24},
 };
 
 static const u8 Page1[] = {
 	PMAKE_NAME, PMAKE_LEVEL, PMAKE_EXP, PMAKE_ID,
 	PMAKE_PERRND, PMAKE_SEX, PMAKE_PERSONAL, 0xff
-};
-static const u8 Page2[] = {
-	PMAKE_CONDITION, PMAKE_FRIEND, PMAKE_POKERUS,
-	PMAKE_TAMAGO, PMAKE_EVGET, PMAKE_NICKNAME, 0xff
 };
 static const u8 Page3[] = {
 	PMAKE_WAZA1, PMAKE_WAZA2, PMAKE_WAZA3,
@@ -120,26 +153,14 @@ static const u8 Page5[] = {
 	PMAKE_AGI_RND, PMAKE_AGI_EXP, PMAKE_EXPOW_RND, PMAKE_EXPOW_EXP,
 	PMAKE_EXDEF_RND, PMAKE_EXDEF_EXP, PMAKE_BATTLEPARAM2, 0xff
 };
-static const u8 Page6[] = {
-	PMAKE_STYLE, PMAKE_BEAUTIFUL, PMAKE_CUTE,
-	PMAKE_CLEVER, PMAKE_STRONG, PMAKE_FUR, 0xff
-};
-static const u8 Page7[] = {
-	PMAKE_GETLEVEL, PMAKE_GETCASSETTE,
-	PMAKE_GETBALL, PMAKE_CONTRY_CODE, PMAKE_FORM_NO, 0xff
-};
-static const u8 Page8[] = {
-	PMAKE_GETPLACE, PMAKE_GETPLACE_Y, PMAKE_GETPLACE_M, PMAKE_GETPLACE_D,
-	PMAKE_GETPLACE2, PMAKE_GETPLACE2_Y, PMAKE_GETPLACE2_M, PMAKE_GETPLACE2_D, 0xff
-};
 
-#define	PMAKE_PAGE_MAX	(8)
+#define PMAKE_PAGE_MAX (4)
 static const PmakePageTable PageTable[] =
 {
-	{ Page1,5}, {Page2,6},
-	{ Page3,6}, {Page4,6},
-	{ Page5,6}, {Page6,6},
-	{ Page7,5}, {Page8,8}
+    {Page1, 5},
+    {Page3, 6},
+    {Page4, 6},
+    {Page5, 6}
 };
 
 static void PokeMake_StrPrint(Window *win, u32 id, u32 x, u32 y, u32 wait, u32 color);
@@ -152,10 +173,11 @@ static void PokeMakeSeq_PagePut(D_POKEMONMAKE *wk);
 static void CursorPut( D_POKEMONMAKE * wk, u8 mode );
 static void PokeMakeSeq_ParamSelect(D_POKEMONMAKE *wk);
 static void PokeMake_NumPrint(Window *win, MessageFormat *wset, PokeMakeWork *dpw, u32 num, u32 keta, u32 x, u32 y, u32 wait, u32 col);
-static void PokeMake_MonsNamePut(Window *win, u32 mons, u32 x, u32 y, u32 wait, u32 col);
 static void PokeMake_StrPrintExp(Window *win, MessageFormat *wset, u32 id, u32 x, u32 y, u32 wait, u32 col);
 static void PokeMakeSeq_ParamChange(D_POKEMONMAKE *wk);
 static void ValueControl(PokeMakeWork *dpw, u8 mode);
+static void PokeMakeSeq_ButtonWait(D_POKEMONMAKE *wk);
+static void PmakeExitTaskSeq(D_POKEMONMAKE *wk);
 
 static void PokeMakeInit(D_POKEMONMAKE *wk)
 {
@@ -181,22 +203,27 @@ static void PokeMakeInit(D_POKEMONMAKE *wk)
 }
 
 // 生成宝可梦的函数
-void DebugPokemonMakeInit(HackBoxTool *hackBox)
+// 先清除主页面的窗口和oam
+void DebugPokemonMakeInit(HackBoxTool *hackBox, u8 mode)
 {
     D_POKEMONMAKE *wk;
     BgConfig *bgl = hackBox->bgConfig;
 
+    // 新页面数据
     wk = SysTask_GetData(PMDS_taskAdd(D_PokemonMakeMain, sizeof(D_POKEMONMAKE), 0, HEAP_ID_HACK_BOX));
 
     wk->seq = 0;
-    wk->mode = POKEMAKE_MODE_DEBUG;
+    wk->mode = mode;
 	wk->wset = MessageFormat_New( HEAP_ID_HACK_BOX );
 	wk->cursor = ListMenuCursorNew( HEAP_ID_HACK_BOX );
 
     wk->saveData = hackBox->saveData;
+    wk->hackBoxTool = hackBox;
 
     AddWindowParameterized(bgl, &wk->win_title, GF_BG_LYR_SUB_0, 1, 1, 30, 4, 11, 1);
     AddWindowParameterized(bgl, &wk->win, GF_BG_LYR_SUB_0, 1, 7, 30, 16, 11, 1 + 30 * 4);
+    FillWindowPixelBuffer(&wk->win, 15);
+    CopyWindowToVram(&wk->win);
 
     LoadUserFrameGfx2(bgl, GF_BG_LYR_SUB_0, 1 + 30 * 4 + 30 * 18, MENU_WIN_PAL, 1, HEAP_ID_HACK_BOX);
     DrawFrameAndWindow2(&wk->win_title, TRUE, 1 + 30 * 4 + 30 * 18, MENU_WIN_PAL);
@@ -337,7 +364,6 @@ static void PokeMakePokeParaWorkGetAll(PokeMakeWork *dpw)
 	PARAMGET( PMAKE_WAZA4, MON_DATA_MOVE4 )
 	PARAMGET( PMAKE_ITEM, MON_DATA_HELD_ITEM )
 
-	//加载当前修改的PM时读取的数据
 	PARAMGET( PMAKE_SPABI, MON_DATA_ABILITY )
 	PARAMGET( PMAKE_HP_RND, MON_DATA_HP_IV )
 	PARAMGET( PMAKE_HP_EXP, MON_DATA_HP_EV )
@@ -404,6 +430,14 @@ static void D_PokemonMakeMain(SysTask *_tcb, void *work)
         case 2:
             PokeMakeSeq_ParamChange(wk);
             break;
+        case 3:
+            PokeMakeSeq_ButtonWait( wk );
+            break;
+        case 4:
+            wk->hackBoxTool->pageMode = HACKBOX_PAGE_MAIN;
+            PmakeExitTaskSeq(wk);
+            PMDS_taskDel( _tcb );
+            break;
     }
 }
 
@@ -427,6 +461,26 @@ static void PokeMakeSeq_PagePut(D_POKEMONMAKE *wk)
     PagePut(wk);
     CursorPut(wk, PMC_INIT);
     wk->seq = 1;
+}
+
+// --------------------------------------------------
+// 退出
+// --------------------------------------------------
+static void PmakeExitTaskSeq(D_POKEMONMAKE *wk)
+{
+    Heap_Free(wk->pmw.PokeMakeData);
+
+    ClearFrameAndWindow2(&wk->win_title, FALSE);
+    ClearFrameAndWindow2(&wk->win, FALSE);
+
+    RemoveWindow(&wk->win_title);
+    RemoveWindow(&wk->win);
+
+    MessageFormat_Delete(wk->wset);
+    DestroyListMenuCursorObj(wk->cursor);
+
+    FillBgTilemapRect(wk->hackBoxTool->bgConfig, GF_BG_LYR_SUB_0, 0, 0, 0, 32, 24, 0);
+    BgCommitTilemapBufferToVram(wk->hackBoxTool->bgConfig, GF_BG_LYR_SUB_0);
 }
 
 // --------------------------------------------------
@@ -553,6 +607,11 @@ static void PokeMakeSeq_ParamSelect(D_POKEMONMAKE *wk)
         return;
     }
 
+    if( gSystem.newKeys & PAD_BUTTON_B ){
+		wk->seq = 4;
+		return;
+	}
+
     if (gSystem.newKeys & PAD_KEY_UP)
     {
         CursorPut(wk, PMC_DEC);
@@ -581,6 +640,14 @@ static void PokeMakeSeq_ParamSelect(D_POKEMONMAKE *wk)
         return;
     }
 }
+
+static void PokeMakeSeq_ButtonWait(D_POKEMONMAKE *wk)
+{
+    if (gSystem.newKeys & PAD_BUTTON_A)
+    {
+        wk->seq = 0;
+    }
+}
 /********************************************************************/
 /*				各項目表示制御										*/
 /*				各項目設定制御										*/
@@ -593,6 +660,32 @@ static u8 PutProcString(D_POKEMONMAKE *wk, u8 id, u32 pal, u8 y)
     u8 vp, vpl;
 
     dpw = &wk->pmw;
+
+    if (id == PMAKE_BATTLEPARAM1)
+    {
+        PokeMake_StrPrint(&wk->win, msg_pmlabel_35, 12, y, MSG_NO_PUT, COLOR_W_BLUE);
+        PokeMake_NumPrint(&wk->win, wk->wset, dpw, dpw->PMD[PMAKE_HP], 3, 12 + 24, y + 16, MSG_NO_PUT, COLOR_W_BLACK);
+
+        PokeMake_StrPrint(&wk->win, msg_pmlabel_36, 12 + 72, y, MSG_NO_PUT, COLOR_W_BLUE);
+        PokeMake_NumPrint(&wk->win, wk->wset, dpw, dpw->PMD[PMAKE_POW], 3, 12 + 72 + 24, y + 16, MSG_NO_PUT, COLOR_W_BLACK);
+
+        PokeMake_StrPrint(&wk->win, msg_pmlabel_37, 12 + 72 + 72, y, MSG_NO_PUT, COLOR_W_BLUE);
+        PokeMake_NumPrint(&wk->win, wk->wset, dpw, dpw->PMD[PMAKE_DEF], 3, 12 + 72 + 72 + 24, y + 16, MSG_NO_PUT, COLOR_W_BLACK);
+        return 0;
+    }
+
+    if (id == PMAKE_BATTLEPARAM2)
+    {
+        PokeMake_StrPrint(&wk->win, msg_pmlabel_38, 12, y, MSG_NO_PUT, COLOR_W_BLUE);
+        PokeMake_NumPrint(&wk->win, wk->wset, dpw, dpw->PMD[PMAKE_AGI], 3, 12 + 24, y + 16, MSG_NO_PUT, COLOR_W_BLACK);
+
+        PokeMake_StrPrint(&wk->win, msg_pmlabel_39, 12 + 72, y, MSG_NO_PUT, COLOR_W_BLUE);
+        PokeMake_NumPrint(&wk->win, wk->wset, dpw, dpw->PMD[PMAKE_EXPOW], 3, 12 + 72 + 24, y + 16, MSG_NO_PUT, COLOR_W_BLACK);
+
+        PokeMake_StrPrint(&wk->win, msg_pmlabel_40, 12 + 72 + 72, y, MSG_NO_PUT, COLOR_W_BLUE);
+        PokeMake_NumPrint(&wk->win, wk->wset, dpw, dpw->PMD[PMAKE_EXDEF], 3, 12 + 72 + 72 + 24, y + 16, MSG_NO_PUT, COLOR_W_BLACK);
+        return 0;
+    }
 
     PokeMake_StrPrint(&wk->win, PMakelabelTable[id].label, 12, y, 0xFF, pal);
     vp = PMakelabelTable[id].cont->count;
@@ -619,11 +712,29 @@ static u8 PutProcString(D_POKEMONMAKE *wk, u8 id, u32 pal, u8 y)
                 break;
         }
     }
+    else if( id >= PMAKE_WAZA1 && id <= PMAKE_WAZA4 ){
+		PokeMake_NumPrint(&wk->win, wk->wset, dpw, dpw->PMD[id], vp, 12+72+24, y, MSG_NO_PUT, pal );
+		BufferMoveName( wk->wset, 0, dpw->PMD[id] );
+		PokeMake_StrPrintExp(&wk->win, wk->wset, msg_pmstr_08, 12+72+24+32, y, MSG_NO_PUT, pal );
+	}
     else if ((id >= PMAKE_LEVEL && id <= PMAKE_PERRND) ||
              (id >= PMAKE_HP_RND && id <= PMAKE_POKERUS) ||
              (id >= PMAKE_GETPLACE && id <= PMAKE_GETPLACE2_D))
     {
         PokeMake_NumPrint(&wk->win, wk->wset, dpw, dpw->PMD[id], vp, 12 + 72 + 24, y, 0xFF, pal);
+    }
+    else if (id == PMAKE_ITEM)
+    {
+        PokeMake_NumPrint(&wk->win, wk->wset, dpw, dpw->PMD[id], vp, 12 + 72 + 24, y, MSG_NO_PUT, pal);
+        BufferItemName(wk->wset, 0, dpw->PMD[id]);
+        PokeMake_StrPrintExp(&wk->win, wk->wset, msg_pmstr_09, 12 + 72 + 24 + 32, y, MSG_NO_PUT, pal);
+    }
+    else if (id == PMAKE_SPABI)
+    {
+        int ability = dpw->PMD[PMAKE_SPABI];
+
+        BufferAbilityName(wk->wset, 0, ability);
+        PokeMake_StrPrintExp(&wk->win, wk->wset, msg_pmstr_10, 12 + 72 + 24, y, MSG_NO_PUT, pal);
     }
     else if (id == PMAKE_PERSONAL)
     {

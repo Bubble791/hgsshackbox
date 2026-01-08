@@ -115,7 +115,7 @@
 .definethumblabel GetMonGender, 0x0206FF88
 .definethumblabel GetMonNature, 0x0206FDFC
 .definethumblabel SizeOfStructPokemon, 0x0206DD28
-.definethumblabel MI_CpuCopy8, 0x020D4A50
+.definearmlabel MI_CpuCopy8, 0x020D4A50
 .definethumblabel SysTask_CreateOnMainQueue, 0x0200E320
 .definethumblabel ListMenuUpdateCursorObj, 0x020157F0
 .definethumblabel FillWindowPixelRect, 0x0201DA74
@@ -128,3 +128,14 @@
 .definethumblabel CalcMonLevelAndStats, 0x0206E250
 .definethumblabel Mon_GetBoxMon, 0x02070DB0
 .definethumblabel InitBoxMonMoveset, 0x020712D8
+.definethumblabel BufferMoveName, 0x0200BFF0
+.definethumblabel BufferItemName, 0x0200C0CC
+.definethumblabel BufferAbilityName, 0x0200C060
+.definethumblabel ClearFrameAndWindow2, 0x0200E9BC
+.definethumblabel ClearWindowTilemapAndCopyToVram, 0x0201D8C8
+.definethumblabel RemoveWindow, 0x0201D520
+.definethumblabel MessageFormat_Delete, 0x0200BDA0
+.definethumblabel DestroyListMenuCursorObj, 0x020157B8
+.definethumblabel SysTask_Destroy, 0x0200E390
+.definethumblabel BgCommitTilemapBufferToVram, 0x0201BF7C
+.definethumblabel FillBgTilemapRect, 0x0201C8C4

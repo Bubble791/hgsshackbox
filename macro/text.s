@@ -4,19 +4,19 @@ gText_titleName:
 
 .align 4
 gText_InfoText:
-    .string "版本 1.0.0$"
+    .string "          当前版本 1.0.0\n注意：修改等级后会重新生成技能$"
 
 .align 4
 gText_PokemonEdit:
-    .string "宝可梦修改$"
+    .string "添加宝可梦$"
 
 .align 4
 gText_ItemEdit:
-    .string "背包道具修改$"
+    .string "修改宝可梦$"
 
 .align 4
 gText_MoreEdit:
-    .string "更多功能$"
+    .string "添加背包道具$"
 
 .align 4
 gText_ExitBox:
@@ -55,8 +55,80 @@ gText_msg_pmlabel_06:
     .string "性格$"
 
 .align 4
+gText_msg_pmlabel_07: .string "技能1$"
+
+.align 4
+gText_msg_pmlabel_08: .string "技能2$"
+
+.align 4
+gText_msg_pmlabel_09: .string "技能3$"
+
+.align 4
+gText_msg_pmlabel_10: .string "技能4$"
+
+.align 4
+gText_msg_pmlabel_11: .string "携带道具$"
+
+.align 4
+gText_msg_pmlabel_12: .string "特性$"
+
+.align 4
+gText_msg_pmlabel_13: .string "HP个体值$"
+
+.align 4
+gText_msg_pmlabel_14: .string "HP努力值$"
+
+.align 4
+gText_msg_pmlabel_15: .string "攻击个体值$"
+
+.align 4
+gText_msg_pmlabel_16: .string "攻击努力值$"
+
+.align 4
+gText_msg_pmlabel_17: .string "防御个体值$"
+
+.align 4
+gText_msg_pmlabel_18: .string "防御努力值$"
+
+.align 4
+gText_msg_pmlabel_19: .string "速度个体值$"
+
+.align 4
+gText_msg_pmlabel_20: .string "速度努力值$"
+
+.align 4
+gText_msg_pmlabel_21: .string "特攻个体值$"
+
+.align 4
+gText_msg_pmlabel_22: .string "特攻努力值$"
+
+.align 4
+gText_msg_pmlabel_23: .string "特防个体值$"
+
+.align 4
+gText_msg_pmlabel_24: .string "特防努力值$"
+
+.align 4
+gText_msg_pmlabel_35: .string "ＨＰ$"
+
+.align 4
+gText_msg_pmlabel_36: .string "攻击$"
+
+.align 4
+gText_msg_pmlabel_37: .string "防御$"
+
+.align 4
+gText_msg_pmlabel_38: .string "速度$"
+
+.align 4
+gText_msg_pmlabel_39: .string "特攻$"
+
+.align 4
+gText_msg_pmlabel_40: .string "特防$"
+
+.align 4
 gText_msg_pmstr_00:
-    .string "♀$"
+    .string "无$"
 
 .align 4
 gText_msg_pmstr_01:
@@ -64,11 +136,19 @@ gText_msg_pmstr_01:
 
 .align 4
 gText_msg_pmstr_02:
-    .string "无$"
+    .string "♀$"
 
 .align 4
-gText_msg_pmstr_11:
-    .halfword 0xFFFE, 0x0107, 0x1, 0x0, 0xFFFF
+gText_msg_pmstr_08: .halfword 0xFFFE, 0x0106, 0x1, 0x0, 0xFFFF
+
+.align 4
+gText_msg_pmstr_09: .halfword 0xFFFE, 0x0108, 0x1, 0x0, 0xFFFF
+
+.align 4
+gText_msg_pmstr_10: .halfword 0xFFFE, 0x0105, 0x1, 0x0, 0xFFFF
+
+.align 4
+gText_msg_pmstr_11: .halfword 0xFFFE, 0x0107, 0x1, 0x0, 0xFFFF
 
 .align 4
 gText_msg_pminfo_02:

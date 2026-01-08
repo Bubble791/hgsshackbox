@@ -114,6 +114,8 @@ static void HackBox_LoadFont(HackBoxTool *hackBox, int fontID, int newFiles);
 static void HackBoxTool_ChangeSelectButton(HackBoxTool *hackBox);
 static void HackBoxTool_ChangeCursor(HackBoxTool *hackBox);
 static void HackBoxTool_HandleMainPage(HackBoxTool *hackBox);
+static void HackBoxTool_ReLoadButton(HackBoxTool *hackBox);
+static void HackBoxTool_ReLoadWindow(HackBoxTool *hackBox);
 
 extern u16 gText_titleName[];
 extern u16 gText_InfoText[];
@@ -171,13 +173,36 @@ BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
 			nowPage = hackBox->pageMode;
 			HackBoxTool_HandleMainPage(hackBox);
 			if (nowPage != hackBox->pageMode)
+			{
+				// 清除主页面的窗口和oam
+				for (int i = 0; i < NELEMS(hackBox->mainButtonWindow); i++)
+				{
+					FillWindowPixelBuffer(&hackBox->mainButtonWindow[i], 0);
+					CopyWindowToVram(&hackBox->mainButtonWindow[i]);
+				}
+				HackBoxTool_ReLoadButton(hackBox);
 				*pState = 1;
+			}
 			break;
 		case 1:
-			DebugPokemonMakeInit(hackBox);
+			switch (hackBox->pageMode)
+			{
+				case HACKBOX_PAGE_ADD_POKEMON:
+					DebugPokemonMakeInit(hackBox, POKEMAKE_MODE_DEBUG);
+					break;
+				case HACKBOX_PAGE_CHANGE_POKEMON:
+					DebugPokemonMakeInit(hackBox, POKEMAKE_MODE_CHANGE);
+					break;
+			}
 			*pState = 2;
 			break;
-		
+		case 2:
+			if (hackBox->pageMode == HACKBOX_PAGE_MAIN)
+			{
+				HackBoxTool_ReLoadWindow(hackBox);
+				*pState = 0;
+			}
+			break;
 		default:
 			break;
 	}
@@ -257,7 +282,7 @@ void HackBoxTool_DrawSprite(HackBoxTool *hackBox)
 
 	SpriteTemplate spriteTemplate;
 
-	CreateSpriteResourcesHeader(&hackBox->spriteHeader, 100, 100, 100, 100, -1, -1, FALSE, 0, 
+	CreateSpriteResourcesHeader(&hackBox->spriteHeader, 100, 100, 100, 100, -1, -1, FALSE, 1, 
 		hackBox->gfxResMen[0], hackBox->gfxResMen[1], hackBox->gfxResMen[2], hackBox->gfxResMen[3], NULL, NULL);
 
 	spriteTemplate.spriteList = hackBox->spriteList;
@@ -327,7 +352,6 @@ static void HackBoxTool_DrawSelectButton(HackBoxTool *hackBox)
 		AddTextPrinterParameterizedWithColor(&hackBox->mainButtonWindow[i], 4, hackBox->textString, 2 + (96 - stringWidth) / 2, 0, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 15, 0), NULL);
 		CopyWindowToVram(&hackBox->mainButtonWindow[i]);
 	}
-	// HackBoxTool_ChangeSelectButton(hackBox);
 }
 
 static void HackBoxTool_ChangeSelectButton(HackBoxTool *hackBox)
@@ -345,6 +369,29 @@ static void HackBoxTool_ChangeSelectButton(HackBoxTool *hackBox)
 		BgTilemapRectChangePalette(hackBox->bgConfig, GF_BG_LYR_SUB_2, 2, 2 + 5 * i, 28, 4, pal);
 	}
 	ScheduleBgTilemapBufferTransfer(hackBox->bgConfig, GF_BG_LYR_SUB_2);
+}
+
+static void HackBoxTool_ReLoadButton(HackBoxTool *hackBox)
+{
+	int i;
+
+	for (i = 0; i < 4; i++)
+	{
+		BgTilemapRectChangePalette(hackBox->bgConfig, GF_BG_LYR_SUB_2, 2, 2 + 5 * i, 28, 4, 2);
+	}
+	ScheduleBgTilemapBufferTransfer(hackBox->bgConfig, GF_BG_LYR_SUB_2);
+}
+
+static void HackBoxTool_ReLoadWindow(HackBoxTool *hackBox)
+{
+	for (int i = 0; i < NELEMS(hackBox->mainButtonWindow); i++)
+	{
+		FillWindowPixelBuffer(&hackBox->mainButtonWindow[i], 0);
+		HackBox_LoadString(sChooseText[i], hackBox->textString);
+		u32 stringWidth = FontID_String_GetWidth(4, hackBox->textString, 0);
+		AddTextPrinterParameterizedWithColor(&hackBox->mainButtonWindow[i], 4, hackBox->textString, 2 + (96 - stringWidth) / 2, 0, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 15, 0), NULL);
+		CopyWindowToVram(&hackBox->mainButtonWindow[i]);
+	}
 }
 
 static void HackBoxTool_ChangeCursor(HackBoxTool *hackBox)
