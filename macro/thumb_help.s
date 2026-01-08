@@ -9,6 +9,7 @@ __gnu_thumb1_case_uqi:
     pop    {r1}
     bx    lr
 
+__aeabi_uidiv:
 __aeabi_uidivmod:
     push {lr}
     blx _u32_div_f

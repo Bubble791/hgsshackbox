@@ -1,0 +1,105 @@
+#include "global.h"
+
+#include "bg_window.h"
+#include "filesystem.h"
+#include "font.h"
+#include "gf_gfx_loader.h"
+#include "gf_gfx_planes.h"
+#include "launch_application.h"
+#include "math_util.h"
+#include "menu_input_state.h"
+#include "message_format.h"
+#include "msgdata.h"
+#include "obj_char_transfer.h"
+#include "obj_pltt_transfer.h"
+#include "pokemon_icon_idx.h"
+#include "sound_02004A44.h"
+#include "systask_environment.h"
+#include "system.h"
+#include "text.h"
+#include "font.h"
+#include "font_data.h"
+#include "unk_0200B150.h"
+#include "unk_0200FA24.h"
+#include "unk_02013534.h"
+#include "touchscreen_list_menu.h"
+#include "unk_0200ACF0.h"
+#include "unk_02005D10.h"
+#include "vram_transfer_manager.h"
+#include "hackbox.h"
+
+SysTask *PMDS_taskAdd(SysTaskFunc func, int work_size, u32 pri, const u32 heap_id)
+{
+    void *work_memory;
+
+    if (work_size)
+    {
+        work_memory = AllocFromHeap(heap_id, work_size);
+        if (work_memory == NULL)
+        {
+            return NULL;
+        }
+        memset(work_memory, 0, work_size);
+    }
+    else
+    {
+        work_memory = NULL;
+    }
+    return SysTask_CreateOnMainQueue(func, work_memory, pri);
+}
+
+// 功能性函数
+void HackBox_LoadString(u16 *stringPtr, String *outString)
+{
+	int index;
+
+	for (index = 0;; index++, stringPtr++)
+	{
+		outString->data[index] = *stringPtr;
+		if (*stringPtr == 0xFFFF)
+			break;
+	}
+	outString->maxsize = index;
+	outString->size = index - 1;
+}
+
+extern u16 gText_msg_pmlabel_00[];
+extern u16 gText_msg_pmlabel_01[];
+extern u16 gText_msg_pmlabel_02[];
+extern u16 gText_msg_pmlabel_03[];
+extern u16 gText_msg_pmlabel_04[];
+extern u16 gText_msg_pmlabel_05[];
+extern u16 gText_msg_pmlabel_06[];
+extern u16 gText_msg_pminfo_02[];
+
+extern u16 gText_msg_pmstr_00[];
+extern u16 gText_msg_pmstr_01[];
+extern u16 gText_msg_pmstr_02[];
+extern u16 gText_msg_pmstr_11[];
+
+static const u16 *sGlobalString[] = 
+{
+    [msg_pmstr_00] = gText_msg_pmstr_00,
+    [msg_pmstr_01] = gText_msg_pmstr_01,
+    [msg_pmstr_02] = gText_msg_pmstr_02,
+    [msg_pmstr_11] = gText_msg_pmstr_11,
+
+    [msg_pmlabel_00] = gText_msg_pmlabel_00,
+    [msg_pmlabel_01] = gText_msg_pmlabel_01,
+    [msg_pmlabel_02] = gText_msg_pmlabel_02,
+    [msg_pmlabel_03] = gText_msg_pmlabel_03,
+    [msg_pmlabel_04] = gText_msg_pmlabel_04,
+    [msg_pmlabel_05] = gText_msg_pmlabel_05,
+    [msg_pmlabel_06] = gText_msg_pmlabel_06,
+    [msg_pminfo_02] = gText_msg_pminfo_02,
+};
+
+void HackBox_LoadStringByID(u32 id, String *outString)
+{
+    if ( id >= MSG_MAX)
+    {
+        id = 0;
+    }
+    
+    HackBox_LoadString((u16 *)sGlobalString[id], outString);
+}

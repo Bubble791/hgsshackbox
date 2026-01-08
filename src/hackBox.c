@@ -32,6 +32,7 @@
 #include "unk_02005D10.h"
 #include "vram_transfer_manager.h"
 #include "hackbox.h"
+#include "hackbox_pokemon.h"
 
 const GraphicsBanks graphicsBanks = {
 	GX_VRAM_BG_256_AB,
@@ -112,6 +113,7 @@ static void HackBoxTool_DrawSelectButton(HackBoxTool *hackBox);
 static void HackBox_LoadFont(HackBoxTool *hackBox, int fontID, int newFiles);
 static void HackBoxTool_ChangeSelectButton(HackBoxTool *hackBox);
 static void HackBoxTool_ChangeCursor(HackBoxTool *hackBox);
+static void HackBoxTool_HandleMainPage(HackBoxTool *hackBox);
 
 extern u16 gText_titleName[];
 extern u16 gText_InfoText[];
@@ -141,10 +143,8 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
     data->fileHandle = NARC_New(85, HEAP_ID_HACK_BOX);
     data->bgConfig = BgConfig_Alloc(HEAP_ID_HACK_BOX);
 
-	data->hackBoxPoke = AllocFromHeap(HEAP_ID_HACK_BOX, sizeof(HackBoxToolPokemon));
-	MI_CpuFill8(data->hackBoxPoke, 0, sizeof(HackBoxToolPokemon));
 	data->procParam = OverlayManager_GetArgs(ovyMan);
-	data->partySaveData = SaveArray_Party_Get(data->procParam->saveData);
+	data->saveData = data->procParam->saveData;
 
     HackBoxTool_DrawScreen(data);
 	HackBoxTool_DrawSprite(data);
@@ -156,6 +156,38 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
 	HBlankInterruptDisable();
 
 	BeginNormalPaletteFade(0, 1, 1, RGB_BLACK, 16, 1, HEAP_ID_HACK_BOX);
+    return TRUE;
+}
+
+BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
+{
+	u8 nowPage;
+	u8 uiRet = FALSE;
+	HackBoxTool *hackBox = OverlayManager_GetData(ovyMan);
+
+	switch (*pState)
+	{
+		case 0:
+			nowPage = hackBox->pageMode;
+			HackBoxTool_HandleMainPage(hackBox);
+			if (nowPage != hackBox->pageMode)
+				*pState = 1;
+			break;
+		case 1:
+			DebugPokemonMakeInit(hackBox);
+			*pState = 2;
+			break;
+		
+		default:
+			break;
+	}
+	SpriteList_RenderAndAnimateSprites(hackBox->spriteList);
+	HackBoxTool_ChangeCursor(hackBox);
+    return FALSE;
+}
+
+BOOL HackBoxTool_Exit(OverlayManager *ovyMan, int *pState)
+{
     return TRUE;
 }
 
@@ -329,6 +361,34 @@ static void HackBox_VBlankCB(void *param)
     OS_SetIrqCheckFlag(OS_IE_V_BLANK);
 }
 
+static void HackBox_Load4BPPScreen(HackBoxTool *hackBox, int fileIndex, u8 bgLayout, int size)
+{
+	void *rawData = GfGfxLoader_LoadFromOpenNarc(hackBox->fileHandle, fileIndex, FALSE, HEAP_ID_HACK_BOX, FALSE);
+	void *bgTilemapBuffer = GetBgTilemapBuffer(hackBox->bgConfig, bgLayout);
+
+	if (bgTilemapBuffer != NULL) {
+		BG_LoadScreenTilemapData(hackBox->bgConfig, (u8)bgLayout, rawData, size);
+		BgCopyOrUncompressTilemapBufferRangeToVram(hackBox->bgConfig, (u8)bgLayout, rawData, size, 0);
+	}
+	Heap_Free(rawData);
+}
+
+static void HackBox_LoadFont(HackBoxTool *hackBox, int fontID, int newFiles)
+{
+	// 重新加载字体图片
+	// 默认ROM使用的xzonn的码表，为了保证acg汉化版本能显示正确的字，这里把字体读取成xzonn版本的
+	// 如果字体正在被共用，程序结束后需要重新加载原字库
+	// 注意：新增的字体文件日版和美版不同
+	if (sFontWork->fontDataRefCount[fontID] > 0)
+	{
+		FontData_Delete(sFontWork->fontDataMan[fontID]);
+		hackBox->needReloadFont[fontID] = TRUE;
+	}
+
+	sFontWork->fontDataMan[fontID] = FontData_New(NARC_graphic_font, newFiles, FONTARC_MODE_LAZY, FALSE, HEAP_ID_HACK_BOX);
+	sFontWork->fontDataRefCount[fontID]++;
+}
+
 static void HackBoxTool_HandleMainPage(HackBoxTool *hackBox)
 {
 	// 触摸效果
@@ -363,91 +423,4 @@ static void HackBoxTool_HandleMainPage(HackBoxTool *hackBox)
 		PlaySE(0x5DD);
 		HackBoxTool_ChangeSelectButton(hackBox);
 	}
-}
-
-BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
-{
-	u8 nowPage;
-	u8 uiRet = FALSE;
-	HackBoxTool *hackBox = OverlayManager_GetData(ovyMan);
-
-	switch (*pState)
-	{
-		case 0:
-			if (IsPaletteFadeFinished())
-				*pState = 1;
-			break;
-		case 1:
-			nowPage = hackBox->pageMode;
-			switch (hackBox->pageMode)
-			{
-				case HACKBOX_PAGE_MAIN:
-					HackBoxTool_HandleMainPage(hackBox);
-					break;
-			}
-			if (nowPage != hackBox->pageMode)
-				*pState = 2;
-			break;
-		case 2:
-			switch (hackBox->pageMode)
-			{
-				case HACKBOX_PAGE_POKEMON:
-					uiRet = HackBoxTool_PokemonPageUI(hackBox);
-					break;
-			}
-			if (uiRet)
-				*pState = 1;
-			break;
-	}
-	SpriteList_RenderAndAnimateSprites(hackBox->spriteList);
-	HackBoxTool_ChangeCursor(hackBox);
-    return FALSE;
-}
-
-BOOL HackBoxTool_Exit(OverlayManager *ovyMan, int *pState)
-{
-    return TRUE;
-}
-
-// 功能性函数
-void HackBox_LoadString(u16 *stringPtr, String *outString)
-{
-	int index;
-
-	for (index = 0;; index++, stringPtr++)
-	{
-		outString->data[index] = *stringPtr;
-		if (*stringPtr == 0xFFFF)
-			break;
-	}
-	outString->maxsize = index;
-	outString->size = index - 1;
-}
-
-static void HackBox_Load4BPPScreen(HackBoxTool *hackBox, int fileIndex, u8 bgLayout, int size)
-{
-	void *rawData = GfGfxLoader_LoadFromOpenNarc(hackBox->fileHandle, fileIndex, FALSE, HEAP_ID_HACK_BOX, FALSE);
-	void *bgTilemapBuffer = GetBgTilemapBuffer(hackBox->bgConfig, bgLayout);
-
-	if (bgTilemapBuffer != NULL) {
-		BG_LoadScreenTilemapData(hackBox->bgConfig, (u8)bgLayout, rawData, size);
-		BgCopyOrUncompressTilemapBufferRangeToVram(hackBox->bgConfig, (u8)bgLayout, rawData, size, 0);
-	}
-	Heap_Free(rawData);
-}
-
-static void HackBox_LoadFont(HackBoxTool *hackBox, int fontID, int newFiles)
-{
-	// 重新加载字体图片
-	// 默认ROM使用的xzonn的码表，为了保证acg汉化版本能显示正确的字，这里把字体读取成xzonn版本的
-	// 如果字体正在被共用，程序结束后需要重新加载原字库
-	// 注意：新增的字体文件日版和美版不同
-	if (sFontWork->fontDataRefCount[fontID] > 0)
-	{
-		FontData_Delete(sFontWork->fontDataMan[fontID]);
-		hackBox->needReloadFont[fontID] = TRUE;
-	}
-
-	sFontWork->fontDataMan[fontID] = FontData_New(NARC_graphic_font, newFiles, FONTARC_MODE_LAZY, FALSE, HEAP_ID_HACK_BOX);
-	sFontWork->fontDataRefCount[fontID]++;
 }

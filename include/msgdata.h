@@ -5,6 +5,12 @@
 #include "message_format.h"
 #include "pm_string.h"
 
+typedef enum
+{
+    MSGMAN_TYPE_NORMAL,
+    MSGMAN_TYPE_DIRECT,
+} MSGMAN_TYPE;
+
 typedef enum MsgDataLoadType {
     MSGDATA_LOAD_DIRECT,
     MSGDATA_LOAD_LAZY,
