@@ -178,6 +178,7 @@ static void PokeMakeSeq_ParamChange(D_POKEMONMAKE *wk);
 static void ValueControl(PokeMakeWork *dpw, u8 mode);
 static void PokeMakeSeq_ButtonWait(D_POKEMONMAKE *wk);
 static void PmakeExitTaskSeq(D_POKEMONMAKE *wk);
+static void D_PokeWazaSetPos(Pokemon *pokeparam, u16 waza, u16 pos);
 
 static void PokeMakeInit(D_POKEMONMAKE *wk)
 {
@@ -211,7 +212,7 @@ void DebugPokemonMakeInit(HackBoxTool *hackBox, u8 mode)
 
     // 新页面数据
     wk = SysTask_GetData(PMDS_taskAdd(D_PokemonMakeMain, sizeof(D_POKEMONMAKE), 0, HEAP_ID_HACK_BOX));
-
+    DebugHex(wk)
     wk->seq = 0;
     wk->mode = mode;
 	wk->wset = MessageFormat_New( HEAP_ID_HACK_BOX );
@@ -346,6 +347,75 @@ static void PokeMakePokeParaCalcGetBattleParam( PokeMakeWork * dpw )
     dpw->PMD[PMAKE_EXDEF] = GetMonData(dpw->PokeMakeData, MON_DATA_SPDEF, NULL);
 }
 
+static void PokeMakePokeParaCalcEnd(D_POKEMONMAKE *wk, PokeMakeWork *dpw)
+{
+	u32	pow_rnd;
+	u32	tmp;
+
+	pow_rnd = ( (dpw->PMD[PMAKE_HP_RND]&0x0000001f) << 0 )
+			| ( (dpw->PMD[PMAKE_POW_RND]&0x0000001f) << 5 )
+			| ( (dpw->PMD[PMAKE_DEF_RND]&0x0000001f) << 10 )
+			| ( (dpw->PMD[PMAKE_AGI_RND]&0x0000001f) << 15 )
+			| ( (dpw->PMD[PMAKE_EXPOW_RND]&0x0000001f) << 20 )
+			| ( (dpw->PMD[PMAKE_EXDEF_RND]&0x0000001f) << 25 );
+
+    CreateMon(
+        dpw->PokeMakeData,
+        dpw->PMD[PMAKE_NAME],
+        dpw->PMD[PMAKE_LEVEL],
+        pow_rnd,
+        1, dpw->PMD[PMAKE_PERRND],
+        1, dpw->PMD[PMAKE_ID]);
+
+    if (dpw->PMD[PMAKE_WAZA1])
+    {
+        D_PokeWazaSetPos(dpw->PokeMakeData, dpw->PMD[PMAKE_WAZA1], 0);
+    }
+    if (dpw->PMD[PMAKE_WAZA2])
+    {
+        D_PokeWazaSetPos(dpw->PokeMakeData, dpw->PMD[PMAKE_WAZA2], 1);
+    }
+    if (dpw->PMD[PMAKE_WAZA3])
+    {
+        D_PokeWazaSetPos(dpw->PokeMakeData, dpw->PMD[PMAKE_WAZA3], 2);
+    }
+    if (dpw->PMD[PMAKE_WAZA4])
+    {
+        D_PokeWazaSetPos(dpw->PokeMakeData, dpw->PMD[PMAKE_WAZA4], 3);
+    }
+    SetMonData(dpw->PokeMakeData, MON_DATA_EXPERIENCE, &dpw->PMD[PMAKE_EXP]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_HP_IV, &dpw->PMD[PMAKE_HP_RND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_HP_EV, &dpw->PMD[PMAKE_HP_EXP]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_ATK_IV, &dpw->PMD[PMAKE_POW_RND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_ATK_EV, &dpw->PMD[PMAKE_POW_EXP]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_DEF_IV, &dpw->PMD[PMAKE_DEF_RND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_DEF_EV, &dpw->PMD[PMAKE_DEF_EXP]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_SPEED_IV, &dpw->PMD[PMAKE_AGI_RND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_SPEED_EV, &dpw->PMD[PMAKE_AGI_EXP]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_SPATK_IV, &dpw->PMD[PMAKE_EXPOW_RND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_SPATK_EV, &dpw->PMD[PMAKE_EXPOW_EXP]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_SPDEF_IV, &dpw->PMD[PMAKE_EXDEF_RND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_SPDEF_EV, &dpw->PMD[PMAKE_EXDEF_EXP]);
+
+    SetMonData(dpw->PokeMakeData, MON_DATA_FRIENDSHIP, &dpw->PMD[PMAKE_FRIEND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_POKERUS, &dpw->PMD[PMAKE_POKERUS]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_HELD_ITEM, &dpw->PMD[PMAKE_ITEM]);
+
+    SetMonData(dpw->PokeMakeData, MON_DATA_ABILITY, &tmp);
+    SetMonData(dpw->PokeMakeData, MON_DATA_FORM, &dpw->PMD[PMAKE_FORM_NO]);
+
+    CalcMonLevelAndStats(dpw->PokeMakeData);
+}
+
+static void D_PokeWazaSetPos(Pokemon *pokeparam, u16 waza, u16 pos)
+{
+    u8 pp;
+
+    pp = GetMoveAttr(waza, 5);
+    SetMonData(pokeparam, MON_DATA_MOVE1 + pos, &waza);
+    SetMonData(pokeparam, MON_DATA_MOVE1PP + pos, &pp);
+}
+
 /********************************************************************/
 #define PARAMGET( index, ID ) { dpw->PMD[index] = GetMonData( dpw->PokeMakeData, ID, NULL ); }
 
@@ -411,6 +481,108 @@ static void PokeMakePokeParaWorkGetAll(PokeMakeWork *dpw)
 	PARAMGET( PMAKE_GETPLACE2_Y, MON_DATA_MET_YEAR )
 	PARAMGET( PMAKE_GETPLACE2_M, MON_DATA_MET_MONTH )
 	PARAMGET( PMAKE_GETPLACE2_D, MON_DATA_MET_DAY )
+}
+
+
+#define PARAMPUT( index, ID ) {	SetMonData( dpw->PokeMakeData, ID, &dpw->PMD[index] ); }
+
+static void PokeMakePokeParaWorkPutAll( PokeMakeWork * dpw )
+{
+	int	val;
+
+	PARAMPUT( PMAKE_NAME, MON_DATA_SPECIES )
+	PARAMPUT( PMAKE_LEVEL, MON_DATA_LEVEL )
+	PARAMPUT( PMAKE_EXP, MON_DATA_EXPERIENCE )
+	PARAMPUT( PMAKE_ID, MON_DATA_OTID )
+	PARAMPUT( PMAKE_PERRND, MON_DATA_PERSONALITY )
+	PARAMPUT( PMAKE_SEX, MON_DATA_GENDER )
+
+	if( dpw->PMD[PMAKE_WAZA1] ){
+		D_PokeWazaSetPos( dpw->PokeMakeData, dpw->PMD[PMAKE_WAZA1], 0 );
+	}
+	if( dpw->PMD[PMAKE_WAZA2] ){
+		D_PokeWazaSetPos( dpw->PokeMakeData, dpw->PMD[PMAKE_WAZA2], 1 );
+	}
+	if( dpw->PMD[PMAKE_WAZA3] ){
+		D_PokeWazaSetPos( dpw->PokeMakeData, dpw->PMD[PMAKE_WAZA3], 2 );
+	}
+	if( dpw->PMD[PMAKE_WAZA4] ){
+		D_PokeWazaSetPos( dpw->PokeMakeData, dpw->PMD[PMAKE_WAZA4], 3 );
+	}
+
+    PARAMPUT(PMAKE_ITEM, MON_DATA_HELD_ITEM)
+    PARAMPUT(PMAKE_SPABI, MON_DATA_ABILITY)
+    PARAMPUT(PMAKE_HP_RND, MON_DATA_HP_IV)
+    PARAMPUT(PMAKE_HP_EXP, MON_DATA_HP_EV)
+    PARAMPUT(PMAKE_POW_RND, MON_DATA_ATK_IV)
+    PARAMPUT(PMAKE_POW_EXP, MON_DATA_ATK_EV)
+    PARAMPUT(PMAKE_DEF_RND, MON_DATA_DEF_IV)
+    PARAMPUT(PMAKE_DEF_EXP, MON_DATA_DEF_EV)
+    PARAMPUT(PMAKE_AGI_RND, MON_DATA_SPEED_IV)
+    PARAMPUT(PMAKE_AGI_EXP, MON_DATA_SPEED_EV)
+    PARAMPUT(PMAKE_EXPOW_RND, MON_DATA_SPATK_IV)
+    PARAMPUT(PMAKE_EXPOW_EXP, MON_DATA_SPATK_EV)
+    PARAMPUT(PMAKE_EXDEF_RND, MON_DATA_SPDEF_IV)
+    PARAMPUT(PMAKE_EXDEF_EXP, MON_DATA_SPDEF_EV)
+
+    PARAMPUT(PMAKE_FRIEND, MON_DATA_FRIENDSHIP)
+    PARAMPUT(PMAKE_POKERUS, MON_DATA_POKERUS)
+
+    PARAMPUT(PMAKE_HP, MON_DATA_MAXHP)
+    PARAMPUT(PMAKE_POW, MON_DATA_ATK)
+    PARAMPUT(PMAKE_DEF, MON_DATA_DEF)
+    PARAMPUT(PMAKE_AGI, MON_DATA_SPEED)
+    PARAMPUT(PMAKE_EXPOW, MON_DATA_SPATK)
+    PARAMPUT(PMAKE_EXDEF, MON_DATA_SPDEF)
+
+    PARAMPUT(PMAKE_FORM_NO, MON_DATA_FORM)
+
+    CalcMonLevelAndStats(dpw->PokeMakeData);
+}
+
+// --------------------------------------------------
+// 加入到内存里
+// --------------------------------------------------
+static u8 PokeMakeCopy(D_POKEMONMAKE *wk)
+{
+    if (wk->mode == POKEMAKE_MODE_DEBUG)
+    {
+        Party *party = SaveArray_Party_Get(wk->saveData);
+
+        if (Party_AddMon(party, wk->pmw.PokeMakeData) == TRUE)
+        {
+            return 0;
+        }
+
+        PCStorage_PlaceMonInFirstEmptySlotInAnyBox(
+            SaveArray_PCStorage_Get(wk->saveData), 
+            Mon_GetBoxMon(wk->pmw.PokeMakeData)
+        );
+        return 1;
+    }
+    else if (wk->mode == POKEMAKE_MODE_CHANGE)
+    {
+        Party *temoti = SaveArray_Party_Get(wk->saveData);
+
+        Pokemon *pp;
+        String *str;
+        u8 sex;
+
+        pp = Party_GetMonByIndex(temoti, 0);
+
+        str = String_New(16, HEAP_ID_HACK_BOX);
+        GetMonData(pp, MON_DATA_OT_NAME_2, str);
+        SetMonData(wk->pmw.PokeMakeData, MON_DATA_OT_NAME_2, str);
+        String_Delete(str);
+
+        sex = GetMonData(pp, MON_DATA_MET_GENDER, NULL);
+        SetMonData(wk->pmw.PokeMakeData, MON_DATA_MET_GENDER, &sex);
+
+        Party_SafeCopyMonToSlot_ResetUnkSub(temoti, 0, wk->pmw.PokeMakeData);
+        return 0;
+    }
+
+    return 0;
 }
 
 // --------------------------------------------------
@@ -612,6 +784,30 @@ static void PokeMakeSeq_ParamSelect(D_POKEMONMAKE *wk)
 		return;
 	}
 
+    if (gSystem.newKeys & PAD_BUTTON_START)
+    {
+        if (wk->mode != POKEMAKE_MODE_CHANGE)
+        {
+            PokeMakePokeParaCalcEnd(wk, &wk->pmw);
+        }
+        else
+        {
+            PokeMakePokeParaWorkPutAll(&wk->pmw);
+        }
+        BOOL ret = PokeMakeCopy(wk);
+        FillWindowPixelRect(&wk->win, 15, 24, 64, 30 * 8 - 24, 32);
+        if (ret == 1)
+        {
+            PokeMake_StrPrint(&wk->win, msg_pminfo_01, 32, 72, 0, COLOR_W_BLACK);
+        }
+        else
+        {
+            PokeMake_StrPrint(&wk->win, msg_pminfo_00, 32, 72, 0, COLOR_W_BLACK);
+        }
+        wk->seq = 3;
+        return;
+    }
+
     if (gSystem.newKeys & PAD_KEY_UP)
     {
         CursorPut(wk, PMC_DEC);
@@ -656,7 +852,6 @@ static void PokeMakeSeq_ButtonWait(D_POKEMONMAKE *wk)
 static u8 PutProcString(D_POKEMONMAKE *wk, u8 id, u32 pal, u8 y)
 {
     PokeMakeWork *dpw;
-    u16 i;
     u8 vp, vpl;
 
     dpw = &wk->pmw;

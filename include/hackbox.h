@@ -20,6 +20,8 @@ enum
 	msg_pmstr_09,
 	msg_pmstr_10,
 	msg_pmstr_11,
+	msg_pminfo_00,
+	msg_pminfo_01,
 	msg_pmlabel_00,
 	msg_pmlabel_01,
 	msg_pmlabel_02,
@@ -72,6 +74,7 @@ enum
 typedef struct
 {
 	SaveData *saveData;
+	MenuInputStateMgr* stateMgr;
 } WIFINOTE_PROC_PARAM;
 
 typedef struct HackBoxTool
@@ -81,22 +84,18 @@ typedef struct HackBoxTool
     BgConfig *bgConfig;
     NARC *fileHandle;
     MessageFormat *msgFormat;
-	MsgData *msgData;
 	SpriteList *spriteList;
     G2dRenderer g2dRender;
 	GF_2DGfxResMan *gfxResMen[4];
 	SpriteResource *gfxResObjs[4];
-	SpriteResource *iconResObjs[4];
 	NNSG2dRenderSurface surface;
 	Window titleWindow;
 	Window infoWindow;
 	Window mainButtonWindow[4];
 	String *textString;
-	TouchscreenListMenuSpawner *menuSpawner;
-	int needReloadFont[5];
+	struct FontWork backupFontWork;
 	int cursor;
 	SpriteResourcesHeader spriteHeader;
-	SpriteResourcesHeader iconSpriteHeader;
 	Sprite *cursorSprite;
 	int pageMode;
 } HackBoxTool;

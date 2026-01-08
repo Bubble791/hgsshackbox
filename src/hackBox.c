@@ -113,7 +113,7 @@ static void HackBoxTool_DrawSelectButton(HackBoxTool *hackBox);
 static void HackBox_LoadFont(HackBoxTool *hackBox, int fontID, int newFiles);
 static void HackBoxTool_ChangeSelectButton(HackBoxTool *hackBox);
 static void HackBoxTool_ChangeCursor(HackBoxTool *hackBox);
-static void HackBoxTool_HandleMainPage(HackBoxTool *hackBox);
+static BOOL HackBoxTool_HandleMainPage(HackBoxTool *hackBox);
 static void HackBoxTool_ReLoadButton(HackBoxTool *hackBox);
 static void HackBoxTool_ReLoadWindow(HackBoxTool *hackBox);
 
@@ -141,12 +141,15 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
     CreateHeap(HEAPID_BASE_APP, HEAP_ID_HACK_BOX, 0x30000);
 
     data = OverlayManager_CreateAndGetData(ovyMan, sizeof(HackBoxTool), HEAP_ID_HACK_BOX);
+	DebugHex(data)
     memset(data, 0, sizeof(HackBoxTool));
     data->fileHandle = NARC_New(85, HEAP_ID_HACK_BOX);
     data->bgConfig = BgConfig_Alloc(HEAP_ID_HACK_BOX);
 
 	data->procParam = OverlayManager_GetArgs(ovyMan);
 	data->saveData = data->procParam->saveData;
+	data->backupFontWork = *sFontWork;
+	FontWork_Init();
 
     HackBoxTool_DrawScreen(data);
 	HackBoxTool_DrawSprite(data);
@@ -171,8 +174,11 @@ BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
 	{
 		case 0:
 			nowPage = hackBox->pageMode;
-			HackBoxTool_HandleMainPage(hackBox);
-			if (nowPage != hackBox->pageMode)
+			if (HackBoxTool_HandleMainPage(hackBox))
+			{
+				*pState = 3;
+			}
+			else if (nowPage != hackBox->pageMode)
 			{
 				// 清除主页面的窗口和oam
 				for (int i = 0; i < NELEMS(hackBox->mainButtonWindow); i++)
@@ -203,8 +209,8 @@ BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
 				*pState = 0;
 			}
 			break;
-		default:
-			break;
+		case 3:
+			return TRUE;
 	}
 	SpriteList_RenderAndAnimateSprites(hackBox->spriteList);
 	HackBoxTool_ChangeCursor(hackBox);
@@ -213,6 +219,44 @@ BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
 
 BOOL HackBoxTool_Exit(OverlayManager *ovyMan, int *pState)
 {
+	HackBoxTool *hackBox = OverlayManager_GetData(ovyMan);
+
+	FontID_Release(0);
+	FontID_Release(4);
+
+	*sFontWork = hackBox->backupFontWork;
+	Main_SetVBlankIntrCB(NULL, NULL);
+
+	NARC_Delete(hackBox->fileHandle);
+
+	sub_0200AEB0(hackBox->gfxResObjs[0]);
+    sub_0200B0A8(hackBox->gfxResObjs[1]);
+	for (int i = 0; i < 4; ++i) {
+        Destroy2DGfxResObjMan(hackBox->gfxResMen[i]);
+    }
+	SpriteList_Delete(hackBox->spriteList);
+    OamManager_Free();
+	ObjCharTransfer_Destroy();
+    ObjPlttTransfer_Destroy();
+	for (int i = 0; i < NELEMS(hackBox->mainButtonWindow); ++i) {
+        RemoveWindow(&hackBox->mainButtonWindow[i]);
+    }
+	RemoveWindow(&hackBox->titleWindow);
+	RemoveWindow(&hackBox->infoWindow);
+	FreeBgTilemapBuffer(hackBox->bgConfig, GF_BG_LYR_SUB_0);
+	FreeBgTilemapBuffer(hackBox->bgConfig, GF_BG_LYR_SUB_1);
+	FreeBgTilemapBuffer(hackBox->bgConfig, GF_BG_LYR_SUB_2);
+	FreeBgTilemapBuffer(hackBox->bgConfig, GF_BG_LYR_SUB_3);
+    FreeBgTilemapBuffer(hackBox->bgConfig, GF_BG_LYR_MAIN_3);
+    FreeBgTilemapBuffer(hackBox->bgConfig, GF_BG_LYR_MAIN_2);
+    FreeBgTilemapBuffer(hackBox->bgConfig, GF_BG_LYR_MAIN_1);
+    FreeBgTilemapBuffer(hackBox->bgConfig, GF_BG_LYR_MAIN_0);
+    Heap_FreeExplicit(HEAP_ID_HACK_BOX, hackBox->bgConfig);
+	MessageFormat_Delete(hackBox->msgFormat);
+	String_Delete(hackBox->textString);
+	OverlayManager_FreeData(ovyMan);
+    DestroyHeap(HEAP_ID_HACK_BOX);
+
     return TRUE;
 }
 
@@ -310,7 +354,6 @@ void HackBoxTool_DrawSprite(HackBoxTool *hackBox)
 static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
 {
 	hackBox->msgFormat = MessageFormat_New(HEAP_ID_HACK_BOX);
-	hackBox->msgData = NewMsgDataFromNarc(MSGDATA_LOAD_DIRECT, NARC_msgdata_msg, 249, HEAP_ID_HACK_BOX);
 	HackBox_LoadFont(hackBox, 4, 10);
 	HackBox_LoadFont(hackBox, 0, 11);
 
@@ -319,10 +362,9 @@ static void HackBoxTool_DrawWindow(HackBoxTool *hackBox)
     LoadFontPal1(GF_PAL_LOCATION_MAIN_BG, 11 * 32, HEAP_ID_HACK_BOX);
     LoadFontPal1(GF_PAL_LOCATION_SUB_BG, 11 * 32, HEAP_ID_HACK_BOX);
 
-	hackBox->menuSpawner = TouchscreenListMenuSpawner_Create(HEAP_ID_HACK_BOX, 0);
 	// 标题部分
 	AddWindowParameterized(hackBox->bgConfig, &hackBox->titleWindow, GF_BG_LYR_MAIN_0, 2, 0, 8, 3, 11, 20);
-	// hackBox->textString = NewString_ReadMsgData(hackBox->msgData, 7);
+
 	hackBox->textString = String_New(128, HEAP_ID_HACK_BOX);
 	HackBox_LoadString(gText_titleName, hackBox->textString);
 
@@ -426,17 +468,11 @@ static void HackBox_LoadFont(HackBoxTool *hackBox, int fontID, int newFiles)
 	// 默认ROM使用的xzonn的码表，为了保证acg汉化版本能显示正确的字，这里把字体读取成xzonn版本的
 	// 如果字体正在被共用，程序结束后需要重新加载原字库
 	// 注意：新增的字体文件日版和美版不同
-	if (sFontWork->fontDataRefCount[fontID] > 0)
-	{
-		FontData_Delete(sFontWork->fontDataMan[fontID]);
-		hackBox->needReloadFont[fontID] = TRUE;
-	}
-
 	sFontWork->fontDataMan[fontID] = FontData_New(NARC_graphic_font, newFiles, FONTARC_MODE_LAZY, FALSE, HEAP_ID_HACK_BOX);
-	sFontWork->fontDataRefCount[fontID]++;
+	sFontWork->fontDataRefCount[fontID] = 1;
 }
 
-static void HackBoxTool_HandleMainPage(HackBoxTool *hackBox)
+static BOOL HackBoxTool_HandleMainPage(HackBoxTool *hackBox)
 {
 	// 触摸效果
 	int ret = TouchscreenHitbox_FindHitboxAtTouchNew(sModeSelectTouch);
@@ -461,7 +497,11 @@ static void HackBoxTool_HandleMainPage(HackBoxTool *hackBox)
 			PlaySE(0x5DD);
 			HackBoxTool_ChangeSelectButton(hackBox);
 		}
-		return;
+		else if (gSystem.newKeys & PAD_BUTTON_B)
+		{
+			return TRUE;
+		}
+		return FALSE;
 	}
 	else
 	{
@@ -470,4 +510,5 @@ static void HackBoxTool_HandleMainPage(HackBoxTool *hackBox)
 		PlaySE(0x5DD);
 		HackBoxTool_ChangeSelectButton(hackBox);
 	}
+	return FALSE;
 }

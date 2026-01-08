@@ -151,5 +151,11 @@ gText_msg_pmstr_10: .halfword 0xFFFE, 0x0105, 0x1, 0x0, 0xFFFF
 gText_msg_pmstr_11: .halfword 0xFFFE, 0x0107, 0x1, 0x0, 0xFFFF
 
 .align 4
+gText_msg_pminfo_00: .string "宝可梦添加到手上$"
+
+.align 4
+gText_msg_pminfo_01: .string "宝可梦添加到盒子$"
+
+.align 4
 gText_msg_pminfo_02:
-    .string "宝可梦添加\nＳＴＡＲＴ：写入修改 ＬＲ：翻页 $"
+    .string "宝可梦添加\nＳＴＡＲＴ：添加宝可梦 ＬＲ：翻页 $"

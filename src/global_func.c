@@ -28,6 +28,10 @@
 #include "vram_transfer_manager.h"
 #include "hackbox.h"
 
+#ifdef DEBUG_PRINT_SYS
+__attribute__((section(".ewram"))) char DebugTextBuf[0xAC];
+#endif
+
 SysTask *PMDS_taskAdd(SysTaskFunc func, int work_size, u32 pri, const u32 heap_id)
 {
     void *work_memory;
@@ -108,6 +112,8 @@ extern u16 gText_msg_pmlabel_38[];
 extern u16 gText_msg_pmlabel_39[];
 extern u16 gText_msg_pmlabel_40[];
 
+extern u16 gText_msg_pminfo_00[];
+extern u16 gText_msg_pminfo_01[];
 extern u16 gText_msg_pminfo_02[];
 extern u16 gText_msg_pmstr_00[];
 extern u16 gText_msg_pmstr_01[];
@@ -126,6 +132,7 @@ static const u16 *sGlobalString[] =
     [msg_pmstr_09] = gText_msg_pmstr_09,
     [msg_pmstr_10] = gText_msg_pmstr_10,
     [msg_pmstr_11] = gText_msg_pmstr_11,
+
 
     [msg_pmlabel_00] = gText_msg_pmlabel_00,
     [msg_pmlabel_01] = gText_msg_pmlabel_01,
@@ -160,6 +167,8 @@ static const u16 *sGlobalString[] =
     [msg_pmlabel_39] = gText_msg_pmlabel_39,
     [msg_pmlabel_40] = gText_msg_pmlabel_40,
 
+    [msg_pminfo_00] = gText_msg_pminfo_00,
+    [msg_pminfo_01] = gText_msg_pminfo_01,
     [msg_pminfo_02] = gText_msg_pminfo_02,
 };
 

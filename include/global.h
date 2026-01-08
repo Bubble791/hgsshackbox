@@ -31,9 +31,19 @@ typedef struct {
     }
 
 #define ARRAY_ASSIGN(dest, src) ARRAY_ASSIGN_EX(dest, src, typeof(*(dest)), NELEMS(dest))
+#define DEBUG_PRINT_SYS
 
-void debugsyscall(u8 *buf);
-void sprintf(u8 *buf, char *str, ...);
-#define debug_printf(...) { u8 buf_assumeunuasedfasdf[128]; sprintf(buf_assumeunuasedfasdf, __VA_ARGS__); debugsyscall(buf_assumeunuasedfasdf); }
+#ifdef DEBUG_PRINT_SYS
+void sprintf(char *buf, char *str, ...);
+extern char DebugTextBuf[0xAC];
+extern void debugsyscall(char* msg);
+#define NOCASHGBAPRINTADDR1 0x04FFFA14 // does not automatically add the newline
+
+#define DebugPrintf(...) { sprintf(DebugTextBuf, __VA_ARGS__); debugsyscall(DebugTextBuf); *(volatile u32 *)NOCASHGBAPRINTADDR1 = (u32)DebugTextBuf; }
+
+#define DebugVar(var) DebugPrintf(#var ": %d\n", (var))
+#define DebugHex(var) DebugPrintf(#var ": 0x%x\n", (var))
+
+#endif
 
 #endif // POKEHEARTGOLD_GLOBAL_H

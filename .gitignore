@@ -5,6 +5,7 @@
 *.NCLR
 *.4bpp
 *.nds
+*.sav
 hand.txt
 HGSS_EU.txt
 output.sym
