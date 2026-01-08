@@ -123,3 +123,8 @@
 .definethumblabel StringExpandPlaceholders, 0x0200CBBC
 .definethumblabel BufferNatureName, 0x0200C098
 .definethumblabel BufferSpeciesName, 0x0200BEE8
+.definethumblabel GetMonExpBySpeciesAndLevel, 0x0206FD00
+.definethumblabel SetMonData, 0x0206EC40
+.definethumblabel CalcMonLevelAndStats, 0x0206E250
+.definethumblabel Mon_GetBoxMon, 0x02070DB0
+.definethumblabel InitBoxMonMoveset, 0x020712D8

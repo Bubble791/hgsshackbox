@@ -154,6 +154,8 @@ static void PokeMakeSeq_ParamSelect(D_POKEMONMAKE *wk);
 static void PokeMake_NumPrint(Window *win, MessageFormat *wset, PokeMakeWork *dpw, u32 num, u32 keta, u32 x, u32 y, u32 wait, u32 col);
 static void PokeMake_MonsNamePut(Window *win, u32 mons, u32 x, u32 y, u32 wait, u32 col);
 static void PokeMake_StrPrintExp(Window *win, MessageFormat *wset, u32 id, u32 x, u32 y, u32 wait, u32 col);
+static void PokeMakeSeq_ParamChange(D_POKEMONMAKE *wk);
+static void ValueControl(PokeMakeWork *dpw, u8 mode);
 
 static void PokeMakeInit(D_POKEMONMAKE *wk)
 {
@@ -264,6 +266,59 @@ static void PokeMakePokeParaCalcInit(PokeMakeWork *dpw)
     dpw->PMD[PMAKE_EXDEF] = GetMonData(dpw->PokeMakeData, MON_DATA_SPDEF, NULL);
 }
 
+static void PokeMakePokeParaCalcGetExp(PokeMakeWork *dpw)
+{
+    u32 nulldata = 0;
+
+    SetMonData(dpw->PokeMakeData, MON_DATA_EXPERIENCE, &dpw->PMD[PMAKE_EXP]);
+    // 技クリア
+    SetMonData(dpw->PokeMakeData, MON_DATA_MOVE1, &nulldata);
+    SetMonData(dpw->PokeMakeData, MON_DATA_MOVE2, &nulldata);
+    SetMonData(dpw->PokeMakeData, MON_DATA_MOVE3, &nulldata);
+    SetMonData(dpw->PokeMakeData, MON_DATA_MOVE4, &nulldata);
+
+    CalcMonLevelAndStats(dpw->PokeMakeData);
+    InitBoxMonMoveset(Mon_GetBoxMon(dpw->PokeMakeData));
+
+    dpw->PMD[PMAKE_LEVEL] = GetMonData(dpw->PokeMakeData, MON_DATA_LEVEL, NULL);
+    dpw->PMD[PMAKE_WAZA1] = GetMonData(dpw->PokeMakeData, MON_DATA_MOVE1, NULL);
+    dpw->PMD[PMAKE_WAZA2] = GetMonData(dpw->PokeMakeData, MON_DATA_MOVE2, NULL);
+    dpw->PMD[PMAKE_WAZA3] = GetMonData(dpw->PokeMakeData, MON_DATA_MOVE3, NULL);
+    dpw->PMD[PMAKE_WAZA4] = GetMonData(dpw->PokeMakeData, MON_DATA_MOVE4, NULL);
+
+    dpw->PMD[PMAKE_HP] = GetMonData(dpw->PokeMakeData, MON_DATA_MAXHP, NULL);
+    dpw->PMD[PMAKE_POW] = GetMonData(dpw->PokeMakeData, MON_DATA_ATK, NULL);
+    dpw->PMD[PMAKE_DEF] = GetMonData(dpw->PokeMakeData, MON_DATA_DEF, NULL);
+    dpw->PMD[PMAKE_AGI] = GetMonData(dpw->PokeMakeData, MON_DATA_SPEED, NULL);
+    dpw->PMD[PMAKE_EXPOW] = GetMonData(dpw->PokeMakeData, MON_DATA_SPATK, NULL);
+    dpw->PMD[PMAKE_EXDEF] = GetMonData(dpw->PokeMakeData, MON_DATA_SPDEF, NULL);
+}
+
+static void PokeMakePokeParaCalcGetBattleParam( PokeMakeWork * dpw )
+{
+    SetMonData(dpw->PokeMakeData, MON_DATA_HP_IV, &dpw->PMD[PMAKE_HP_RND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_HP_EV, &dpw->PMD[PMAKE_HP_EXP]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_ATK_IV, &dpw->PMD[PMAKE_POW_RND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_ATK_EV, &dpw->PMD[PMAKE_POW_EXP]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_DEF_IV, &dpw->PMD[PMAKE_DEF_RND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_DEF_EV, &dpw->PMD[PMAKE_DEF_EXP]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_SPEED_IV, &dpw->PMD[PMAKE_AGI_RND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_SPEED_EV, &dpw->PMD[PMAKE_AGI_EXP]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_SPATK_IV, &dpw->PMD[PMAKE_EXPOW_RND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_SPATK_EV, &dpw->PMD[PMAKE_EXPOW_EXP]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_SPDEF_IV, &dpw->PMD[PMAKE_EXDEF_RND]);
+    SetMonData(dpw->PokeMakeData, MON_DATA_SPDEF_EV, &dpw->PMD[PMAKE_EXDEF_EXP]);
+
+    CalcMonLevelAndStats(dpw->PokeMakeData);
+
+    dpw->PMD[PMAKE_HP] = GetMonData(dpw->PokeMakeData, MON_DATA_MAXHP, NULL);
+    dpw->PMD[PMAKE_POW] = GetMonData(dpw->PokeMakeData, MON_DATA_ATK, NULL);
+    dpw->PMD[PMAKE_DEF] = GetMonData(dpw->PokeMakeData, MON_DATA_DEF, NULL);
+    dpw->PMD[PMAKE_AGI] = GetMonData(dpw->PokeMakeData, MON_DATA_SPEED, NULL);
+    dpw->PMD[PMAKE_EXPOW] = GetMonData(dpw->PokeMakeData, MON_DATA_SPATK, NULL);
+    dpw->PMD[PMAKE_EXDEF] = GetMonData(dpw->PokeMakeData, MON_DATA_SPDEF, NULL);
+}
+
 /********************************************************************/
 #define PARAMGET( index, ID ) { dpw->PMD[index] = GetMonData( dpw->PokeMakeData, ID, NULL ); }
 
@@ -332,6 +387,9 @@ static void PokeMakePokeParaWorkGetAll(PokeMakeWork *dpw)
 	PARAMGET( PMAKE_GETPLACE2_D, MON_DATA_MET_DAY )
 }
 
+// --------------------------------------------------
+// 主逻辑
+// --------------------------------------------------
 static void D_PokemonMakeMain(SysTask *_tcb, void *work)
 {
     D_POKEMONMAKE *wk = (D_POKEMONMAKE *)work;
@@ -342,6 +400,9 @@ static void D_PokemonMakeMain(SysTask *_tcb, void *work)
             break;
         case 1:
             PokeMakeSeq_ParamSelect( wk );
+            break;
+        case 2:
+            PokeMakeSeq_ParamChange(wk);
             break;
     }
 }
@@ -368,8 +429,9 @@ static void PokeMakeSeq_PagePut(D_POKEMONMAKE *wk)
     wk->seq = 1;
 }
 
-/********************************************************************/
+// --------------------------------------------------
 // 指针
+// --------------------------------------------------
 static void CursorPut( D_POKEMONMAKE * wk, u8 mode )
 {
 	PokeMakeWork * dpw = &wk->pmw;
@@ -401,8 +463,96 @@ static void CursorPut( D_POKEMONMAKE * wk, u8 mode )
     }
 }
 
+// --------------------------------------------------
+// 数值
+// --------------------------------------------------
+static void PageValuePut(D_POKEMONMAKE *wk)
+{
+    PokeMakeWork *dpw = &wk->pmw;
+    u16 i;
+
+    FillWindowPixelBuffer(&wk->win, 15);
+    i = 0;
+    while (PageTable[dpw->page_p].page[i] != 0xff)
+    {
+        if (i == dpw->cursor_p)
+        {
+            PutProcString(wk, PageTable[dpw->page_p].page[i], COLOR_W_RED, i * 16);
+        }
+        else
+        {
+            PutProcString(wk, PageTable[dpw->page_p].page[i], COLOR_W_BLACK, i * 16);
+        }
+        i++;
+    }
+    CopyWindowToVram(&wk->win);
+}
+
+// 数值变更按键
+static void PokeMakeSeq_ParamChange(D_POKEMONMAKE *wk)
+{
+    u8	data_id;
+
+    data_id = PageTable[wk->pmw.page_p].page[wk->pmw.cursor_p];
+
+    if (gSystem.newKeys & PAD_BUTTON_A)
+    {
+        wk->seq = 0;
+        return;
+    }
+
+    if (gSystem.newKeys & PAD_BUTTON_B)
+    {
+        wk->pmw.PMD[data_id] = wk->pmw.data_bak;
+        wk->seq = 0;
+        return;
+    }
+
+    if (gSystem.newKeys & PAD_KEY_UP)
+    {
+        ValueControl(&wk->pmw, PMC_INC);
+        PageValuePut(wk);
+        return;
+    }
+    if (gSystem.newKeys & PAD_KEY_DOWN)
+    {
+        ValueControl(&wk->pmw, PMC_DEC);
+        PageValuePut(wk);
+        return;
+    }
+
+    if (PMakelabelTable[data_id].cont->count != 0xff)
+    {
+        if ((gSystem.newKeys & PAD_KEY_LEFT) &&
+            wk->pmw.value_p < PMakelabelTable[data_id].cont->count - 1)
+        {
+
+            wk->pmw.value_p++;
+            PageValuePut(wk);
+            return;
+        }
+        if ((gSystem.newKeys & PAD_KEY_RIGHT) && wk->pmw.value_p > 0)
+        {
+            wk->pmw.value_p--;
+            PageValuePut(wk);
+            return;
+        }
+    }
+}
+// --------------------------------------------------
+// 按键
+// --------------------------------------------------
 static void PokeMakeSeq_ParamSelect(D_POKEMONMAKE *wk)
 {
+    if (gSystem.newKeys & PAD_BUTTON_A)
+    {
+        wk->pmw.data_bak = wk->pmw.PMD[PageTable[wk->pmw.page_p].page[wk->pmw.cursor_p]];
+        wk->pmw.value_p = 0;
+        PageValuePut(wk);
+        wk->seq = 2;
+        return;
+    }
+
     if (gSystem.newKeys & PAD_KEY_UP)
     {
         CursorPut(wk, PMC_DEC);
@@ -508,10 +658,6 @@ static void PokeMake_StrPrintExp(Window *win, MessageFormat *wset, u32 id, u32 x
     String_Delete(expb);
 }
 
-static void PokeMake_MonsNamePut(Window *win, u32 mons, u32 x, u32 y, u32 wait, u32 col)
-{
-}
-
 static u32 NumPutColorGet(PokeMakeWork *dpw, u8 cp, u32 col)
 {
     if (col == COLOR_W_RED)
@@ -563,4 +709,108 @@ static void PokeMake_NumPrint(Window *win, MessageFormat *wset, PokeMakeWork *dp
 
     String_Delete(strb);
     String_Delete(expb);
+}
+
+/********************************************************************/
+// 数值修改
+/********************************************************************/
+static const u32 PmakeValueTable[] = {
+	1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000
+};
+
+static u32 getproc(PokeMakeWork *dpw, u8 id)
+{
+    u32 dat;
+
+    switch (id)
+    {
+        default:
+            dat = dpw->PMD[id];
+            break;
+    }
+    return dat;
+}
+
+static void setproc(PokeMakeWork *dpw, u32 dat, u8 id)
+{
+    if (id == PMAKE_NAME || id == PMAKE_PERRND || id == PMAKE_ID)
+    {
+        dpw->PMD[id] = dat;
+        PokeMakePokeParaCalcInit(dpw);
+    }
+    else if (id == PMAKE_LEVEL)
+    {
+        dpw->PMD[id] = dat;
+        dpw->PMD[PMAKE_EXP] = GetMonExpBySpeciesAndLevel(dpw->PMD[PMAKE_NAME], dat);
+        PokeMakePokeParaCalcInit(dpw);
+    }
+    else if (id == PMAKE_EXP)
+    {
+        dpw->PMD[id] = dat;
+        PokeMakePokeParaCalcGetExp(dpw);
+    }
+    else if (id >= PMAKE_HP_RND && id <= PMAKE_EXDEF_EXP)
+    {
+        dpw->PMD[id] = dat;
+        PokeMakePokeParaCalcGetBattleParam(dpw);
+    }
+    else
+    {
+        dpw->PMD[id] = dat;
+    }
+}
+
+static void ValueControl(PokeMakeWork *dpw, u8 mode)
+{
+    u32 data, datamin, datamax, value;
+
+    data = getproc(dpw, PageTable[dpw->page_p].page[dpw->cursor_p]);
+    datamin = PMakelabelTable[PageTable[dpw->page_p].page[dpw->cursor_p]].cont->min;
+    datamax = PMakelabelTable[PageTable[dpw->page_p].page[dpw->cursor_p]].cont->max;
+    value = PmakeValueTable[dpw->value_p];
+
+    switch (PMakelabelTable[PageTable[dpw->page_p].page[dpw->cursor_p]].cont->mode)
+    {
+        case PMC_INCDEC:
+            switch (mode)
+            {
+            case PMC_INC:
+                if (data < datamax - value)
+                {
+                    data += value;
+                }
+                else
+                {
+                    if (data < datamax)
+                    {
+                        data = datamax;
+                    }
+                    else
+                    {
+                        data = datamin;
+                    }
+                }
+                break;
+
+            case PMC_DEC:
+                if (data > datamin + value)
+                {
+                    data -= value;
+                }
+                else
+                {
+                    if (data > datamin)
+                    {
+                        data = datamin;
+                    }
+                    else
+                    {
+                        data = datamax;
+                    }
+                }
+                break;
+            }
+            break;
+    }
+    setproc(dpw, data, PageTable[dpw->page_p].page[dpw->cursor_p]);
 }
