@@ -158,3 +158,5 @@
 .definethumblabel Destroy2DGfxResObjMan, 0x0200A0D0
 .definethumblabel FontID_Release, 0x02002DB4
 .definethumblabel FontWork_Init, 0x02002CA8
+.definethumblabel Save_Bag_Get, 0x0207879C
+.definethumblabel Bag_AddItem, 0x02078398

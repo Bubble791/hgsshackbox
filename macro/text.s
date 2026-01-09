@@ -4,7 +4,7 @@ gText_titleName:
 
 .align 4
 gText_InfoText:
-    .string "          当前版本 1.0.0\n注意：修改等级后会重新生成技能$"
+    .string "          {COLOR 1}当前版本 1.0.0{COLOR 0}\n注意：宝可梦修改等级后会重新生成技能$"
 
 .align 4
 gText_PokemonEdit:
@@ -20,7 +20,7 @@ gText_MoreEdit:
 
 .align 4
 gText_ExitBox:
-    .string "退出$"
+    .string "其他功能$"
 
 .align 4
 gText_PokemonEdit_SpeciesNum:
@@ -159,3 +159,16 @@ gText_msg_pminfo_01: .string "宝可梦添加到盒子$"
 .align 4
 gText_msg_pminfo_02:
     .string "宝可梦添加\nＳＴＡＲＴ：添加宝可梦 ＬＲ：翻页 $"
+
+.align 4
+gText_msg_itemmake_00: .string "ｘ$"
+
+.align 4
+gText_msg_itemmake_01: .halfword 0xFFFE, 0x0108, 0x1, 0x0, 0xFFFF
+
+.align 4
+gText_msg_itemmake_02: .halfword 0xFFFE, 0x0134, 0x1, 0x0, 0xFFFF
+
+.align 4
+gText_msg_tips_0: 
+    .string "{COLOR 1}使用指南{COLOR 0}\n上下左右键：调整数值\nA键：切换到数量选择\n处于数量选择时按A键将道具添加到背包 $"

@@ -79,6 +79,15 @@ void HackBox_LoadString(u16 *stringPtr, String *outString)
 	outString->size = index - 1;
 }
 
+void PokeMake_StrPrint(Window *win, u32 id, u32 x, u32 y, u32 wait, u32 color)
+{
+    String *strb = String_New(128, HEAP_ID_HACK_BOX);
+
+    HackBox_LoadStringByID(id, strb);
+    AddTextPrinterParameterizedWithColor(win, 0, strb, x, y, wait, color, NULL);
+    String_Delete(strb);
+}
+
 extern u16 gText_msg_pmlabel_00[];
 extern u16 gText_msg_pmlabel_01[];
 extern u16 gText_msg_pmlabel_02[];
@@ -122,9 +131,14 @@ extern u16 gText_msg_pmstr_08[];
 extern u16 gText_msg_pmstr_09[];
 extern u16 gText_msg_pmstr_10[];
 extern u16 gText_msg_pmstr_11[];
+extern u16 gText_msg_itemmake_00[];
+extern u16 gText_msg_itemmake_01[];
+extern u16 gText_msg_itemmake_02[];
+extern u16 gText_msg_tips_0[];
 
 static const u16 *sGlobalString[] = 
 {
+    [msg_tips_0] = gText_msg_tips_0,
     [msg_pmstr_00] = gText_msg_pmstr_00,
     [msg_pmstr_01] = gText_msg_pmstr_01,
     [msg_pmstr_02] = gText_msg_pmstr_02,
@@ -170,6 +184,10 @@ static const u16 *sGlobalString[] =
     [msg_pminfo_00] = gText_msg_pminfo_00,
     [msg_pminfo_01] = gText_msg_pminfo_01,
     [msg_pminfo_02] = gText_msg_pminfo_02,
+
+    [msg_itemmake_00] = gText_msg_itemmake_00,
+    [msg_itemmake_01] = gText_msg_itemmake_01,
+    [msg_itemmake_02] = gText_msg_itemmake_02,
 };
 
 void HackBox_LoadStringByID(u32 id, String *outString)

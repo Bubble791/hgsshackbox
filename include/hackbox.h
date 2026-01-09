@@ -12,6 +12,7 @@
 
 enum
 {
+	msg_tips_0,
 	msg_pminfo_02,
 	msg_pmstr_00,
 	msg_pmstr_01,
@@ -54,6 +55,10 @@ enum
 	msg_pmlabel_38,
 	msg_pmlabel_39,
 	msg_pmlabel_40,
+
+	msg_itemmake_00,
+	msg_itemmake_01,
+	msg_itemmake_02,
 	MSG_MAX
 };
 
@@ -105,3 +110,5 @@ void HackBox_LoadString(u16 *stringPtr, String *outString);
 void HackBox_LoadStringByID(u32 id, String *outString);
 SysTask *PMDS_taskAdd(SysTaskFunc func, int work_size, u32 pri, const u32 heap_id);
 void PMDS_taskDel(SysTask *tcb);
+void DebugItemMakeInit(HackBoxTool *hackBox);
+void PokeMake_StrPrint(Window *win, u32 id, u32 x, u32 y, u32 wait, u32 color);

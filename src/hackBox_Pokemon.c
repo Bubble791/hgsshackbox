@@ -32,12 +32,6 @@
 #define FLD_MBGFRM_FONT 0
 #define MENU_WIN_PAL 13
 
-#define COLOR_W_BLUE (MAKE_TEXT_COLOR(3, 4, 15))
-#define COLOR_W_RED (MAKE_TEXT_COLOR(5, 6, 15))
-#define COLOR_W_PINK (MAKE_TEXT_COLOR(7, 8, 15))
-#define COLOR_W_GREEN (MAKE_TEXT_COLOR(9, 10, 15))
-#define COLOR_W_BLACK (MAKE_TEXT_COLOR(1, 2, 0))
-
 typedef struct
 {
     Pokemon *PokeMakeData;
@@ -163,7 +157,6 @@ static const PmakePageTable PageTable[] =
     {Page5, 6}
 };
 
-static void PokeMake_StrPrint(Window *win, u32 id, u32 x, u32 y, u32 wait, u32 color);
 static void PokeMakePokeParaCalcInit(PokeMakeWork *dpw);
 static void PokeMakeWorkInit(PokeMakeWork *dpw);
 static void PokeMakePokeParaWorkGetAll(PokeMakeWork *dpw);
@@ -212,7 +205,7 @@ void DebugPokemonMakeInit(HackBoxTool *hackBox, u8 mode)
 
     // 新页面数据
     wk = SysTask_GetData(PMDS_taskAdd(D_PokemonMakeMain, sizeof(D_POKEMONMAKE), 0, HEAP_ID_HACK_BOX));
-    DebugHex(wk)
+
     wk->seq = 0;
     wk->mode = mode;
 	wk->wset = MessageFormat_New( HEAP_ID_HACK_BOX );
@@ -937,15 +930,6 @@ static u8 PutProcString(D_POKEMONMAKE *wk, u8 id, u32 pal, u8 y)
         PokeMake_StrPrintExp(&wk->win, wk->wset, msg_pmstr_11, 12 + 72 + 24, y, MSG_NO_PUT, pal);
     }
     return 0;
-}
-
-static void PokeMake_StrPrint(Window *win, u32 id, u32 x, u32 y, u32 wait, u32 color)
-{
-    String *strb = String_New(128, HEAP_ID_HACK_BOX);
-
-    HackBox_LoadStringByID(id, strb);
-    AddTextPrinterParameterizedWithColor(win, FLD_MBGFRM_FONT, strb, x, y, wait, color, NULL);
-    String_Delete(strb);
 }
 
 static void PokeMake_StrPrintExp(Window *win, MessageFormat *wset, u32 id, u32 x, u32 y, u32 wait, u32 col)

@@ -167,7 +167,6 @@ BOOL HackBoxTool_Init(OverlayManager *ovyMan, int *pState)
 BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
 {
 	u8 nowPage;
-	u8 uiRet = FALSE;
 	HackBoxTool *hackBox = OverlayManager_GetData(ovyMan);
 
 	switch (*pState)
@@ -176,6 +175,7 @@ BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
 			nowPage = hackBox->pageMode;
 			if (HackBoxTool_HandleMainPage(hackBox))
 			{
+				BeginNormalPaletteFade(0, 16, 16, RGB_BLACK, 6, 1, HEAP_ID_HACK_BOX);
 				*pState = 3;
 			}
 			else if (nowPage != hackBox->pageMode)
@@ -185,6 +185,7 @@ BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
 				{
 					FillWindowPixelBuffer(&hackBox->mainButtonWindow[i], 0);
 					CopyWindowToVram(&hackBox->mainButtonWindow[i]);
+					RemoveWindow(&hackBox->mainButtonWindow[i]);
 				}
 				HackBoxTool_ReLoadButton(hackBox);
 				*pState = 1;
@@ -199,18 +200,24 @@ BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
 				case HACKBOX_PAGE_CHANGE_POKEMON:
 					DebugPokemonMakeInit(hackBox, POKEMAKE_MODE_CHANGE);
 					break;
+				case HACKBOX_PAGE_ITEM:
+					DebugItemMakeInit(hackBox);
+					break;
 			}
 			*pState = 2;
 			break;
 		case 2:
 			if (hackBox->pageMode == HACKBOX_PAGE_MAIN)
 			{
-				HackBoxTool_ReLoadWindow(hackBox);
+				HackBoxTool_DrawSelectButton(hackBox);
 				*pState = 0;
 			}
 			break;
 		case 3:
-			return TRUE;
+			if (IsPaletteFadeFinished()) {
+				return TRUE;
+			}
+			break;
 	}
 	SpriteList_RenderAndAnimateSprites(hackBox->spriteList);
 	HackBoxTool_ChangeCursor(hackBox);
@@ -422,18 +429,6 @@ static void HackBoxTool_ReLoadButton(HackBoxTool *hackBox)
 		BgTilemapRectChangePalette(hackBox->bgConfig, GF_BG_LYR_SUB_2, 2, 2 + 5 * i, 28, 4, 2);
 	}
 	ScheduleBgTilemapBufferTransfer(hackBox->bgConfig, GF_BG_LYR_SUB_2);
-}
-
-static void HackBoxTool_ReLoadWindow(HackBoxTool *hackBox)
-{
-	for (int i = 0; i < NELEMS(hackBox->mainButtonWindow); i++)
-	{
-		FillWindowPixelBuffer(&hackBox->mainButtonWindow[i], 0);
-		HackBox_LoadString(sChooseText[i], hackBox->textString);
-		u32 stringWidth = FontID_String_GetWidth(4, hackBox->textString, 0);
-		AddTextPrinterParameterizedWithColor(&hackBox->mainButtonWindow[i], 4, hackBox->textString, 2 + (96 - stringWidth) / 2, 0, TEXT_SPEED_NOTRANSFER, MAKE_TEXT_COLOR(1, 15, 0), NULL);
-		CopyWindowToVram(&hackBox->mainButtonWindow[i]);
-	}
 }
 
 static void HackBoxTool_ChangeCursor(HackBoxTool *hackBox)

@@ -9,6 +9,7 @@
 .area 0x5300
 .importobj "build/hackBox.o"
 .importobj "build/hackBox_Pokemon.o"
+.importobj "build/hackBox_Item.o"
 .importobj "build/global_func.o"
 
 .include "macro/thumb_help.s"

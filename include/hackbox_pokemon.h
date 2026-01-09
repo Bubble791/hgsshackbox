@@ -1,5 +1,11 @@
 #pragma once
 
+#define COLOR_W_BLUE (MAKE_TEXT_COLOR(3, 4, 15))
+#define COLOR_W_RED (MAKE_TEXT_COLOR(5, 6, 15))
+#define COLOR_W_PINK (MAKE_TEXT_COLOR(7, 8, 15))
+#define COLOR_W_GREEN (MAKE_TEXT_COLOR(9, 10, 15))
+#define COLOR_W_BLACK (MAKE_TEXT_COLOR(1, 2, 0))
+
 #define	PMC_INCDEC		(0)
 #define	PMC_INIT		(0)
 #define	PMC_INC			(1)
