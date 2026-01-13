@@ -4,7 +4,7 @@ gText_titleName:
 
 .align 4
 gText_InfoText:
-    .string "          {COLOR 1}当前版本 1.0.0{COLOR 0}\n1.修改等级后会重新生成技能\n2.修改宝可梦选项只能修改首位$"
+    .string "          {COLOR 1}当前版本 1.0.0{COLOR 0}\n1.修改等级后会重新生成技能\n2.修改宝可梦选项只能修改首位\n更新地址：https://github.com/Bubble791/hgsshackbox\n$"
 
 .align 4
 gText_PokemonEdit:
@@ -161,7 +161,7 @@ gText_msg_pminfo_01: .string "宝可梦添加到盒子$"
 
 .align 4
 gText_msg_pminfo_02:
-    .string "ＳＴＡＲＴ：添加宝可梦 ＬＲ：翻页\n SELECT：设置为闪光$"
+    .string "ＳＴＡＲＴ：添加宝可梦 ＬＲ：翻页\nSELECT：设置为闪光$"
 
 .align 4
 gText_msg_itemmake_00: .string "ｘ$"

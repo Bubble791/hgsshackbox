@@ -7,8 +7,8 @@
 
 // TODO: 修改数量
 // 原版技能有468个
-#define	MOVENO_MAX	(468)
-#define ITEM_DATA_MAX 1000
+#define	MOVENO_MAX	(900)
+#define ITEM_DATA_MAX 880
 #define ABILITY_DATA_MAX 255
 
 #define HEAPID_BASE_APP 3

@@ -76,7 +76,7 @@ typedef struct
     u32 mode;
 } D_POKEMONMAKE;
 
-static const PmakeCont cont00 = {1, 493, PMC_INCDEC, 4};
+static const PmakeCont cont00 = {1, 1024, PMC_INCDEC, 4};
 static const PmakeCont cont01 = {1, 100, PMC_INCDEC, 3};
 static const PmakeCont cont02 = {1, 2000000, PMC_INCDEC, 7};
 static const PmakeCont cont03 = {0, 0xffffffff, PMC_INCDEC, 10};

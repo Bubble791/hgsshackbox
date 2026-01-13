@@ -10,3 +10,7 @@
 
 ## TODO
 - 宝可梦编号选择有问题
+
+## 使用方法
+
+参考[HGE](https://github.com/BluRosie/hg-engine)引擎的编译方法安装环境，把美版心金放到根目录命名为rom.nds，运行make指令生成game_patched.nds新rom
