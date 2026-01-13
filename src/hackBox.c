@@ -203,6 +203,9 @@ BOOL HackBoxTool_Main(OverlayManager *ovyMan, int *pState)
 				case HACKBOX_PAGE_ITEM:
 					DebugItemMakeInit(hackBox);
 					break;
+				default:
+					hackBox->pageMode = HACKBOX_PAGE_MAIN;
+					break;
 			}
 			*pState = 2;
 			break;
