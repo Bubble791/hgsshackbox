@@ -4,7 +4,7 @@ gText_titleName:
 
 .align 4
 gText_InfoText:
-    .string "          {COLOR 1}当前版本 1.0.0{COLOR 0}\n注意：宝可梦修改等级后会重新生成技能$"
+    .string "          {COLOR 1}当前版本 1.0.0{COLOR 0}\n1.修改等级后会重新生成技能\n2.修改宝可梦选项只能修改首位$"
 
 .align 4
 gText_PokemonEdit:
@@ -127,6 +127,9 @@ gText_msg_pmlabel_39: .string "特攻$"
 gText_msg_pmlabel_40: .string "特防$"
 
 .align 4
+gText_msg_pmlabel_47: .string "形态$"
+
+.align 4
 gText_msg_pmstr_00:
     .string "无$"
 
@@ -158,7 +161,7 @@ gText_msg_pminfo_01: .string "宝可梦添加到盒子$"
 
 .align 4
 gText_msg_pminfo_02:
-    .string "宝可梦添加\nＳＴＡＲＴ：添加宝可梦 ＬＲ：翻页 $"
+    .string "ＳＴＡＲＴ：添加宝可梦 ＬＲ：翻页\n SELECT：设置为闪光$"
 
 .align 4
 gText_msg_itemmake_00: .string "ｘ$"

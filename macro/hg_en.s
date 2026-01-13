@@ -160,3 +160,8 @@
 .definethumblabel FontWork_Init, 0x02002CA8
 .definethumblabel Save_Bag_Get, 0x0207879C
 .definethumblabel Bag_AddItem, 0x02078398
+.definethumblabel MonIsShiny, 0x0207003C
+.definethumblabel GetGenderBySpeciesAndPersonality, 0x0206FFC8
+.definethumblabel SetMonPersonality, 0x0207235C
+.definethumblabel Save_PlayerData_GetProfile, 0x02028E9C
+.definethumblabel PlayerProfile_GetTrainerID, 0x02028F84

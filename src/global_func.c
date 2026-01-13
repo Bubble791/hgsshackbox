@@ -120,6 +120,7 @@ extern u16 gText_msg_pmlabel_37[];
 extern u16 gText_msg_pmlabel_38[];
 extern u16 gText_msg_pmlabel_39[];
 extern u16 gText_msg_pmlabel_40[];
+extern u16 gText_msg_pmlabel_47[];
 
 extern u16 gText_msg_pminfo_00[];
 extern u16 gText_msg_pminfo_01[];
@@ -180,6 +181,7 @@ static const u16 *sGlobalString[] =
     [msg_pmlabel_38] = gText_msg_pmlabel_38,
     [msg_pmlabel_39] = gText_msg_pmlabel_39,
     [msg_pmlabel_40] = gText_msg_pmlabel_40,
+    [msg_pmlabel_47] = gText_msg_pmlabel_47,
 
     [msg_pminfo_00] = gText_msg_pminfo_00,
     [msg_pminfo_01] = gText_msg_pminfo_01,

@@ -1,9 +1,15 @@
 #pragma once
 
+#define HIHALF(n) (((n) & 0xFFFF0000) >> 16)
+
+// Extracts the lower 16 bits of a 32-bit number
+#define LOHALF(n) ((n) & 0xFFFF)
+
 // TODO: 修改数量
 // 原版技能有468个
 #define	MOVENO_MAX	(468)
 #define ITEM_DATA_MAX 1000
+#define ABILITY_DATA_MAX 255
 
 #define HEAPID_BASE_APP 3
 #define HEAP_ID_HACK_BOX 51
@@ -48,6 +54,7 @@ enum
 	msg_pmlabel_22,
 	msg_pmlabel_23,
 	msg_pmlabel_24,
+	msg_pmlabel_47,
 
 	msg_pmlabel_35,
 	msg_pmlabel_36,

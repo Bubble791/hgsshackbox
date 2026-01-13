@@ -88,7 +88,7 @@ static const PmakeCont cont08 = {0, MOVENO_MAX, PMC_INCDEC, 3};
 static const PmakeCont cont09 = {0, MOVENO_MAX, PMC_INCDEC, 3};
 static const PmakeCont cont10 = {0, MOVENO_MAX, PMC_INCDEC, 3};
 static const PmakeCont cont11 = {0, ITEM_DATA_MAX, PMC_INCDEC, 3};
-static const PmakeCont cont12 = {0, 2, PMC_INCDEC, 0xffff};
+static const PmakeCont cont12 = {0, ABILITY_DATA_MAX, PMC_INCDEC, 3};
 static const PmakeCont cont13 = {0, 31, PMC_INCDEC, 2};
 static const PmakeCont cont14 = {0, 255, PMC_INCDEC, 3};
 static const PmakeCont cont15 = {0, 31, PMC_INCDEC, 2};
@@ -101,6 +101,7 @@ static const PmakeCont cont21 = {0, 31, PMC_INCDEC, 2};
 static const PmakeCont cont22 = {0, 255, PMC_INCDEC, 3};
 static const PmakeCont cont23 = {0, 31, PMC_INCDEC, 2};
 static const PmakeCont cont24 = {0, 255, PMC_INCDEC, 3};
+static const PmakeCont cont47 = {0, 255, PMC_INCDEC, 3};
 
 static const PmakeParamData PMakelabelTable[] =
 {
@@ -129,6 +130,7 @@ static const PmakeParamData PMakelabelTable[] =
     {msg_pmlabel_22, &cont22},
     {msg_pmlabel_23, &cont23},
     {msg_pmlabel_24, &cont24},
+    [PMAKE_FORM_NO] = {msg_pmlabel_47, &cont47},
 };
 
 static const u8 Page1[] = {
@@ -137,7 +139,7 @@ static const u8 Page1[] = {
 };
 static const u8 Page3[] = {
 	PMAKE_WAZA1, PMAKE_WAZA2, PMAKE_WAZA3,
-	PMAKE_WAZA4, PMAKE_ITEM, PMAKE_SPABI, 0xff
+	PMAKE_WAZA4, PMAKE_ITEM, PMAKE_SPABI, PMAKE_FORM_NO, 0xff
 };
 static const u8 Page4[] = {
 	PMAKE_HP_RND, PMAKE_HP_EXP, PMAKE_POW_RND, PMAKE_POW_EXP,
@@ -152,13 +154,13 @@ static const u8 Page5[] = {
 static const PmakePageTable PageTable[] =
 {
     {Page1, 5},
-    {Page3, 6},
+    {Page3, 7},
     {Page4, 6},
     {Page5, 6}
 };
 
 static void PokeMakePokeParaCalcInit(PokeMakeWork *dpw);
-static void PokeMakeWorkInit(PokeMakeWork *dpw);
+static void PokeMakeWorkInit(HackBoxTool * hackbox, PokeMakeWork *dpw);
 static void PokeMakePokeParaWorkGetAll(PokeMakeWork *dpw);
 static void D_PokemonMakeMain(SysTask *_tcb, void *work);
 static u8 PutProcString(D_POKEMONMAKE *wk, u8 id, u32 pal, u8 y);
@@ -181,7 +183,7 @@ static void PokeMakeInit(D_POKEMONMAKE *wk)
     wk->pmw.PokeMakeData = AllocMonZeroed(HEAP_ID_HACK_BOX);
 
     if (wk->mode == POKEMAKE_MODE_DEBUG) {
-        PokeMakeWorkInit(&wk->pmw);
+        PokeMakeWorkInit(wk->hackBoxTool, &wk->pmw);
     }
     else
     {
@@ -226,7 +228,7 @@ void DebugPokemonMakeInit(HackBoxTool *hackBox, u8 mode)
     PokeMakeInit(wk);
 }
 
-static void PokeMakeWorkInit(PokeMakeWork *dpw)
+static void PokeMakeWorkInit(HackBoxTool * hackbox, PokeMakeWork *dpw)
 {
     u16 i;
 
@@ -237,7 +239,8 @@ static void PokeMakeWorkInit(PokeMakeWork *dpw)
     dpw->PMD[PMAKE_NAME] = 1;
 
     dpw->PMD[PMAKE_PERRND] = (LCRandom() << 16) | (LCRandom());
-
+    PlayerProfile *player = Save_PlayerData_GetProfile(hackbox->saveData);
+    dpw->PMD[PMAKE_ID] = PlayerProfile_GetTrainerID(player);
     dpw->PMD[PMAKE_LEVEL] = 1;
     dpw->PMD[PMAKE_EXP] = 1;
     dpw->PMD[PMAKE_GETLEVEL] = 1;
@@ -394,7 +397,7 @@ static void PokeMakePokeParaCalcEnd(D_POKEMONMAKE *wk, PokeMakeWork *dpw)
     SetMonData(dpw->PokeMakeData, MON_DATA_POKERUS, &dpw->PMD[PMAKE_POKERUS]);
     SetMonData(dpw->PokeMakeData, MON_DATA_HELD_ITEM, &dpw->PMD[PMAKE_ITEM]);
 
-    SetMonData(dpw->PokeMakeData, MON_DATA_ABILITY, &tmp);
+    SetMonData(dpw->PokeMakeData, MON_DATA_ABILITY, &dpw->PMD[PMAKE_SPABI]);
     SetMonData(dpw->PokeMakeData, MON_DATA_FORM, &dpw->PMD[PMAKE_FORM_NO]);
 
     CalcMonLevelAndStats(dpw->PokeMakeData);
@@ -487,7 +490,7 @@ static void PokeMakePokeParaWorkPutAll( PokeMakeWork * dpw )
 	PARAMPUT( PMAKE_LEVEL, MON_DATA_LEVEL )
 	PARAMPUT( PMAKE_EXP, MON_DATA_EXPERIENCE )
 	PARAMPUT( PMAKE_ID, MON_DATA_OTID )
-	PARAMPUT( PMAKE_PERRND, MON_DATA_PERSONALITY )
+	// PARAMPUT( PMAKE_PERRND, MON_DATA_PERSONALITY )
 	PARAMPUT( PMAKE_SEX, MON_DATA_GENDER )
 
 	if( dpw->PMD[PMAKE_WAZA1] ){
@@ -530,6 +533,7 @@ static void PokeMakePokeParaWorkPutAll( PokeMakeWork * dpw )
 
     PARAMPUT(PMAKE_FORM_NO, MON_DATA_FORM)
 
+    SetMonPersonality(dpw->PokeMakeData, dpw->PMD[PMAKE_PERRND]);
     CalcMonLevelAndStats(dpw->PokeMakeData);
 }
 
@@ -761,6 +765,11 @@ static void PokeMakeSeq_ParamChange(D_POKEMONMAKE *wk)
 // --------------------------------------------------
 // 按键
 // --------------------------------------------------
+BOOL IsMonShiny(u32 id, u32 rnd)
+{
+    return ((((id & 0xffff0000) >> 16) ^ (id & 0xffff) ^ ((rnd & 0xffff0000) >> 16) ^ (rnd & 0xffff)) < 16);
+}
+
 static void PokeMakeSeq_ParamSelect(D_POKEMONMAKE *wk)
 {
     if (gSystem.newKeys & PAD_BUTTON_A)
@@ -800,6 +809,35 @@ static void PokeMakeSeq_ParamSelect(D_POKEMONMAKE *wk)
         wk->seq = 3;
         return;
     }
+
+    if (gSystem.newKeys & PAD_BUTTON_SELECT)
+    {
+        u16 species = wk->pmw.PMD[PMAKE_NAME];
+        u32 newPID = 0;
+        u32 id = wk->pmw.PMD[PMAKE_ID];
+        u16 gender = wk->pmw.PMD[PMAKE_SEX];
+        u16 nature = wk->pmw.PMD[PMAKE_PERSONAL];
+        u16 sid = HIHALF(id);
+        u16 tid = LOHALF(id);
+
+        for (;;)
+        {
+            newPID = (LCRandom() | (LCRandom() << 16));
+            u8 shinyRange = 1;
+            newPID = (((shinyRange ^ (sid ^ tid)) ^ LOHALF(newPID)) << 16) | LOHALF(newPID);
+
+            u8 new_nature = newPID % 25;
+            if ((new_nature == nature) &&
+                (gender == GetGenderBySpeciesAndPersonality(species, newPID)))
+            {
+                if (IsMonShiny(id, newPID))
+                    break;
+            }
+        }
+
+        wk->pmw.PMD[PMAKE_PERRND] = newPID;
+        return;
+    } 
 
     if (gSystem.newKeys & PAD_KEY_UP)
     {
@@ -921,8 +959,9 @@ static u8 PutProcString(D_POKEMONMAKE *wk, u8 id, u32 pal, u8 y)
     {
         int ability = dpw->PMD[PMAKE_SPABI];
 
+        PokeMake_NumPrint(&wk->win, wk->wset, dpw, dpw->PMD[id], vp, 12 + 72 + 24, y, MSG_NO_PUT, pal);
         BufferAbilityName(wk->wset, 0, ability);
-        PokeMake_StrPrintExp(&wk->win, wk->wset, msg_pmstr_10, 12 + 72 + 24, y, MSG_NO_PUT, pal);
+        PokeMake_StrPrintExp(&wk->win, wk->wset, msg_pmstr_10, 12 + 72 + 24 + 32, y, MSG_NO_PUT, pal);
     }
     else if (id == PMAKE_PERSONAL)
     {
